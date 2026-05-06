@@ -1,0 +1,7 @@
+{
+    "name": "meni/ppdb",
+    "require": {
+        "phpoffice/phpspreadsheet": "^5.7",
+        "dompdf/dompdf": "^3.1"
+    }
+}

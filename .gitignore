@@ -1,0 +1,38 @@
+# ============================================================
+# .gitignore — PPDB MTs Al-Barakah
+# ============================================================
+
+# Dependency manager
+/vendor/
+composer.lock
+
+# File upload siswa (data sensitif, jangan di-commit)
+/uploads/
+
+# Environment & konfigurasi lokal sensitif
+.env
+.env.local
+config/koneksi_local.php
+
+# Laragon / XAMPP
+*.log
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary PHP files
+*.tmp
+*.swp
+
+# Backup database (jangan commit dump production)
+*.sql.gz
+*.sql.bak
