@@ -119,6 +119,9 @@ $query_siswa = $pdo->query("SELECT * FROM users_siswa ORDER BY id DESC");
                 <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 bg-accent/10 text-accent font-semibold rounded-stitch transition-colors">
                     <i class="ph ph-squares-four text-xl"></i> Dashboard
                 </a>
+                <a href="arsip.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium rounded-stitch transition-colors">
+                    <i class="ph ph-archive text-xl"></i> Arsip Tahun Ajaran
+                </a>
                 
                 <?php if(isset($_SESSION['role_admin']) && $_SESSION['role_admin'] === 'superadmin'): ?>
                 <a href="kelola_users.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium rounded-stitch transition-colors">

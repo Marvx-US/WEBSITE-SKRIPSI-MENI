@@ -117,6 +117,7 @@ CREATE TABLE `users_siswa` (
   `kip` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   -- Status verifikasi
   `status` enum('pending','diterima','ditolak','revisi') COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `tahun_ajaran` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `pesan_revisi` text COLLATE utf8mb4_general_ci,
   -- Data pribadi
   `nik` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,

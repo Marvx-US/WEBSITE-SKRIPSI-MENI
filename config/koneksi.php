@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/database.php';
 
+// Set zona waktu ke WITA (Waktu Indonesia Tengah) agar sinkron dengan waktu lokal user
+date_default_timezone_set('Asia/Makassar');
+
 $host = "localhost";
 $user = "root";
 $pass = "";

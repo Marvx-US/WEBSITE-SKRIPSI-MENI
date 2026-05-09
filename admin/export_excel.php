@@ -18,16 +18,22 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 $status_filter = $_GET['status'] ?? 'diterima';
+$tahun_filter  = $_GET['tahun'] ?? '';
 
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
 
+$title_suffix = '';
+if ($tahun_filter !== '') {
+    $title_suffix = ' TA ' . $tahun_filter;
+}
+
 if ($status_filter === 'all') {
     $sheet->setTitle('Data Siswa (Semua)');
-    $sheet->setCellValue('A1', 'DATA CALON SISWA (SEMUA STATUS)');
+    $sheet->setCellValue('A1', 'DATA CALON SISWA (SEMUA STATUS)' . $title_suffix);
 } else {
     $sheet->setTitle('Data Siswa ' . ucfirst($status_filter));
-    $sheet->setCellValue('A1', 'DATA CALON SISWA (' . strtoupper($status_filter) . ')');
+    $sheet->setCellValue('A1', 'DATA CALON SISWA (' . strtoupper($status_filter) . ')' . $title_suffix);
 }
 
 $sheet->mergeCells('A1:H1');
@@ -55,10 +61,20 @@ $sheet->getStyle('A3:H3')->applyFromArray($headerStyle);
 
 
 if ($status_filter === 'all') {
-    $stmt = $pdo->query("SELECT * FROM users_siswa ORDER BY nama_lengkap ASC");
+    if ($tahun_filter !== '') {
+        $stmt = $pdo->prepare("SELECT * FROM users_siswa WHERE tahun_ajaran = ? ORDER BY nama_lengkap ASC");
+        $stmt->execute([$tahun_filter]);
+    } else {
+        $stmt = $pdo->query("SELECT * FROM users_siswa ORDER BY nama_lengkap ASC");
+    }
 } else {
-    $stmt = $pdo->prepare("SELECT * FROM users_siswa WHERE status = ? ORDER BY nama_lengkap ASC");
-    $stmt->execute([$status_filter]);
+    if ($tahun_filter !== '') {
+        $stmt = $pdo->prepare("SELECT * FROM users_siswa WHERE status = ? AND tahun_ajaran = ? ORDER BY nama_lengkap ASC");
+        $stmt->execute([$status_filter, $tahun_filter]);
+    } else {
+        $stmt = $pdo->prepare("SELECT * FROM users_siswa WHERE status = ? ORDER BY nama_lengkap ASC");
+        $stmt->execute([$status_filter]);
+    }
 }
 
 $rowIdx = 4;
@@ -93,7 +109,8 @@ foreach (range('A', 'H') as $col) {
 }
 
 
-$filename = 'Data_Siswa_' . ucfirst($status_filter) . '_' . date('Ymd_His') . '.xlsx';
+$tahun_str = $tahun_filter !== '' ? '_' . str_replace('/', '-', $tahun_filter) : '';
+$filename = 'Data_Siswa_' . ucfirst($status_filter) . $tahun_str . '_' . date('Ymd_His') . '.xlsx';
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 header('Content-Disposition: attachment;filename="' . $filename . '"');
 header('Cache-Control: max-age=0');

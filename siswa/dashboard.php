@@ -10,6 +10,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'siswa') {
 
 $success = "";
 $error = "";
+
+// PRG: Read redirect status from GET param (result of previous POST)
+$get_status = $_GET['status'] ?? '';
+if ($get_status === 'saved') {
+    $success = "Profil dan Berkas Anda berhasil diperbarui!";
+} elseif ($get_status === 'partial') {
+    $success = "Data teks berhasil disimpan.";
+    $error = "Namun ada berkas gagal diunggah: " . htmlspecialchars($_GET['err'] ?? '') . ". Pastikan ukuran file maks 2MB.";
+} elseif ($get_status === 'password_changed') {
+    $success = "Password berhasil diubah!";
+}
 $user_id = $_SESSION['user_id'];
 
 
@@ -21,6 +32,7 @@ if (isset($_POST['simpan'])) {
     $jk          = trim($_POST['jenis_kelamin'] ?? '');
     $tempat      = trim($_POST['tempat_lahir'] ?? '');
     $tgl         = trim($_POST['tgl_lahir'] ?? '');
+    if ($tgl === '') $tgl = null;
     
     
     $desa        = trim($_POST['desa'] ?? '');
@@ -63,24 +75,37 @@ if (isset($_POST['simpan'])) {
     $kip    = $existing['kip'];
 
     
-    $handleUpload = function($fileKey) use ($target_dir) {
-        if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
+    $upload_errors = [];
+    $handleUpload = function($fileKey, $title) use ($target_dir, &$upload_errors) {
+        if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($_FILES[$fileKey]['error'] !== UPLOAD_ERR_OK) {
+                $err_msg = "Gagal upload";
+                if($_FILES[$fileKey]['error'] == UPLOAD_ERR_INI_SIZE || $_FILES[$fileKey]['error'] == UPLOAD_ERR_FORM_SIZE) {
+                    $err_msg = "Ukuran melebihi batas";
+                }
+                $upload_errors[] = "$title ($err_msg)";
+                return null;
+            }
             $val = validate_upload($_FILES[$fileKey]);
             if ($val['valid']) {
                 $nama_file = time() . '_' . bin2hex(random_bytes(4)) . '.' . $val['ext'];
                 if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $target_dir . $nama_file)) {
                     return $nama_file;
+                } else {
+                    $upload_errors[] = "$title (Gagal memindahkan file)";
                 }
+            } else {
+                $upload_errors[] = "$title (" . $val['message'] . ")";
             }
         }
         return null;
     };
 
-    $new_foto   = $handleUpload('foto');   if ($new_foto) $foto = $new_foto;
-    $new_kk     = $handleUpload('kk');     if ($new_kk) $kk = $new_kk;
-    $new_ijazah = $handleUpload('ijazah'); if ($new_ijazah) $ijazah = $new_ijazah;
-    $new_akte   = $handleUpload('akte');   if ($new_akte) $akte = $new_akte;
-    $new_kip    = $handleUpload('kip');    if ($new_kip) $kip = $new_kip;
+    $new_foto   = $handleUpload('foto', 'Pas Foto');       if ($new_foto) $foto = $new_foto;
+    $new_kk     = $handleUpload('kk', 'Kartu Keluarga');   if ($new_kk) $kk = $new_kk;
+    $new_ijazah = $handleUpload('ijazah', 'Ijazah/SKL');   if ($new_ijazah) $ijazah = $new_ijazah;
+    $new_akte   = $handleUpload('akte', 'Akta Kelahiran'); if ($new_akte) $akte = $new_akte;
+    $new_kip    = $handleUpload('kip', 'KIP/KKS');         if ($new_kip) $kip = $new_kip;
 
     
     $sql = "UPDATE users_siswa SET 
@@ -104,9 +129,17 @@ if (isset($_POST['simpan'])) {
     ]);
 
     if ($exec) {
-        $success = "Profil dan Berkas Anda berhasil diperbarui!";
+        if (count($upload_errors) > 0) {
+            // PRG: redirect with partial-success status so browser does a fresh GET
+            header('Location: dashboard.php?status=partial&err=' . urlencode(implode(", ", $upload_errors)));
+        } else {
+            // PRG: redirect with success status, land on overview tab
+            header('Location: dashboard.php?status=saved&tab=overview');
+        }
+        exit;
     } else {
-        $error = "Terjadi kesalahan saat menyimpan data.";
+        // Non-redirect path — only for hard DB failure, stays on form tab
+        $error = "Terjadi kesalahan saat menyimpan data ke database.";
     }
 }
 
@@ -132,7 +165,9 @@ if (isset($_POST['ganti_password'])) {
         $new_hash = password_hash($new_pass, PASSWORD_DEFAULT);
         $stmt_update_pass = $pdo->prepare("UPDATE users_siswa SET password = ? WHERE id = ?");
         if ($stmt_update_pass->execute([$new_hash, $user_id])) {
-            $success = "Password berhasil diubah!";
+            // PRG: redirect with success status, land on password tab
+            header('Location: dashboard.php?status=password_changed&tab=password');
+            exit;
         } else {
             $error = "Gagal mengubah password.";
         }
@@ -156,19 +191,42 @@ $jadwal_buka     = getPpdbSetting($pdo, 'jadwal_buka');
 $jadwal_tutup    = getPpdbSetting($pdo, 'jadwal_tutup');
 $info_berkas     = getPpdbSetting($pdo, 'info_berkas');
 $info_pengumuman = getPpdbSetting($pdo, 'info_pengumuman');
+$jadwal_pengumuman = getPpdbSetting($pdo, 'jadwal_pengumuman');
+
+$now = time();
+$pengumuman_time = $jadwal_pengumuman ? strtotime($jadwal_pengumuman) : 0;
+$time_diff = $pengumuman_time - $now;
+
+$is_countdown_phase = false;
+$is_revealed = false;
+
+if ($pengumuman_time > 0) {
+    if ($time_diff > 0) {
+        // Fase Rahasia: Jangan pernah bocorkan status asli ke UI
+        $data_siswa['status'] = 'pending';
+        // Fase Suspense (H-1): Lock dashboard
+        if ($time_diff <= 86400) {
+            $is_countdown_phase = true;
+        }
+    } else {
+        // The Zero Moment: Hasil terbuka
+        $is_revealed = true;
+    }
+}
 
 $today   = date('Y-m-d');
 $is_open = (!empty($jadwal_buka) && !empty($jadwal_tutup))
            ? ($today >= $jadwal_buka && $today <= $jadwal_tutup)
            : true;
 
-
 $kelengkapan = 20; 
 if(!empty($data_siswa['nik'])) $kelengkapan += 10;
-if(!empty($data_siswa['desa'])) $kelengkapan += 15;
-if(!empty($data_siswa['nama_ayah'])) $kelengkapan += 15;
+if(!empty($data_siswa['desa'])) $kelengkapan += 10;
+if(!empty($data_siswa['nama_ayah'])) $kelengkapan += 10;
 if(!empty($data_siswa['nama_sd'])) $kelengkapan += 10;
-if(!empty($data_siswa['foto']) && !empty($data_siswa['kk'])) $kelengkapan += 30;
+if(!empty($data_siswa['foto'])) $kelengkapan += 10;
+if(!empty($data_siswa['kk'])) $kelengkapan += 15;
+if(!empty($data_siswa['ijazah'])) $kelengkapan += 15;
 
 $status = $data_siswa['status'] ?: 'pending';
 $badgeClass = "bg-amber-100 text-amber-700";
@@ -218,7 +276,159 @@ if($status === 'diterima') {
     .anim-in{animation:fadeIn .5s cubic-bezier(.16,1,.3,1) both}
     </style>
 </head>
-<body class="bg-surface text-slate-800 antialiased h-screen flex overflow-hidden">
+<body class="bg-surface text-slate-800 antialiased h-screen flex overflow-hidden <?= $is_revealed && $status === 'diterima' ? 'bg-emerald-50' : '' ?>">
+
+<?php if ($is_countdown_phase): ?>
+    <!-- SNBT CINEMATIC COUNTDOWN -->
+    <div class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-6 text-center text-white overflow-hidden">
+        <!-- Ambient Background Glow -->
+        <div class="absolute w-[80vw] h-[80vw] md:w-[40vw] md:h-[40vw] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none -z-10 mix-blend-screen"></div>
+        
+        <img src="../assets/img/logo.png" alt="Logo" class="w-16 h-16 md:w-20 md:h-20 object-contain mb-8 opacity-80">
+        
+        <p class="text-xs md:text-sm font-bold uppercase tracking-[0.4em] text-blue-400 mb-6">Hitung Mundur PPDB</p>
+        <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight mb-12 max-w-2xl leading-tight">Pengumuman Kelulusan PPDB<br>MTs Al-Barakah Akan Dibuka Dalam</h1>
+        
+        <div class="flex items-center gap-3 md:gap-6" id="snbt-timer">
+            <div class="flex flex-col items-center">
+                <div class="w-20 h-24 md:w-32 md:h-36 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center shadow-2xl">
+                    <span class="text-4xl md:text-7xl font-extrabold tabular-nums tracking-tighter" id="cd-hours">00</span>
+                </div>
+                <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">Jam</span>
+            </div>
+            <span class="text-2xl md:text-5xl font-extrabold text-slate-600 pb-8">:</span>
+            <div class="flex flex-col items-center">
+                <div class="w-20 h-24 md:w-32 md:h-36 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center shadow-2xl">
+                    <span class="text-4xl md:text-7xl font-extrabold tabular-nums tracking-tighter" id="cd-mins">00</span>
+                </div>
+                <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">Menit</span>
+            </div>
+            <span class="text-2xl md:text-5xl font-extrabold text-slate-600 pb-8">:</span>
+            <div class="flex flex-col items-center">
+                <div class="w-20 h-24 md:w-32 md:h-36 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center shadow-2xl relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <span class="text-4xl md:text-7xl font-extrabold tabular-nums tracking-tighter text-blue-400" id="cd-secs">00</span>
+                </div>
+                <span class="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">Detik</span>
+            </div>
+        </div>
+        
+        <p class="text-sm text-slate-500 font-medium mt-16 max-w-md">Akses ke dashboard terkunci sementara untuk persiapan sinkronisasi data kelulusan nasional.</p>
+    </div>
+
+    <script>
+        const targetTime = <?= $pengumuman_time * 1000 ?>;
+        
+        function updateTimer() {
+            const now = new Date().getTime();
+            const diff = targetTime - now;
+            
+            if (diff <= 0) {
+                // Nol detik -> Reload untuk melihat hasil!
+                window.location.reload();
+                return;
+            }
+            
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('cd-hours').innerText = hours.toString().padStart(2, '0');
+            document.getElementById('cd-mins').innerText = mins.toString().padStart(2, '0');
+            document.getElementById('cd-secs').innerText = secs.toString().padStart(2, '0');
+            
+            requestAnimationFrame(updateTimer);
+        }
+        
+        requestAnimationFrame(updateTimer);
+    </script>
+<?php else: ?>
+
+    <?php if ($is_revealed): ?>
+    <!-- SNBT REVEAL OVERLAY -->
+    <div id="snbtRevealOverlay" class="fixed inset-0 z-[200] flex flex-col items-center justify-center p-6 text-center text-white overflow-hidden transition-colors duration-[1500ms] bg-slate-900" style="transition-property: background-color, opacity;">
+        <!-- The button -->
+        <div id="revealBtnContainer" class="flex flex-col items-center">
+            <img src="../assets/img/logo.png" alt="Logo" class="w-16 h-16 md:w-20 md:h-20 object-contain mb-8 opacity-80">
+            <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight mb-12 max-w-2xl leading-tight">Pengumuman Kelulusan PPDB<br>MTs Al-Barakah</h1>
+            <button id="btnReveal" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-10 rounded-full text-lg md:text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:scale-105 transition-all">Lihat Hasil Seleksi</button>
+            <p class="text-xs text-slate-500 font-medium mt-8 max-w-md">Data telah tersinkronisasi dengan sistem pusat. Klik tombol di atas untuk membuka dokumen rahasia Anda.</p>
+        </div>
+
+        <!-- The Result Container -->
+        <div id="revealResultContainer" class="hidden flex-col items-center anim-in">
+            <?php if($status === 'diterima'): ?>
+                <i class="ph-fill ph-check-circle text-7xl md:text-8xl text-emerald-400 mb-6 drop-shadow-[0_0_30px_rgba(52,211,153,0.6)]"></i>
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">SELAMAT!</h1>
+                <p class="text-lg md:text-2xl mb-12 text-emerald-50 max-w-2xl leading-relaxed">Anda Dinyatakan <strong class="text-white">LULUS SELEKSI</strong><br>Penerimaan Peserta Didik Baru MTs Al-Barakah.</p>
+            <?php elseif($status === 'ditolak'): ?>
+                <i class="ph-fill ph-x-circle text-7xl md:text-8xl text-red-400 mb-6 drop-shadow-[0_0_30px_rgba(248,113,113,0.6)]"></i>
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">MOHON MAAF.</h1>
+                <p class="text-lg md:text-2xl mb-12 text-red-50 max-w-2xl leading-relaxed">Anda dinyatakan <strong class="text-white">TIDAK LULUS SELEKSI</strong>.<br>Jangan patah semangat dan teruslah belajar.</p>
+            <?php else: ?>
+                <i class="ph-fill ph-warning-circle text-7xl md:text-8xl text-orange-400 mb-6 drop-shadow-[0_0_30px_rgba(251,146,60,0.6)]"></i>
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">HASIL TERTUNDA</h1>
+                <p class="text-lg md:text-2xl mb-12 text-orange-50 max-w-2xl leading-relaxed">Panitia mendapati masalah pada berkas Anda.<br>Mohon selesaikan revisi dokumen.</p>
+            <?php endif; ?>
+
+            <button id="btnToDashboard" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-3.5 px-8 rounded-full backdrop-blur-md transition-all flex items-center gap-2">
+                Lanjut ke Dashboard <i class="ph ph-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('snbtRevealOverlay');
+            if(!overlay) return;
+            const storageKey = 'has_seen_announcement_<?= $user_id ?>';
+            
+            if (localStorage.getItem(storageKey) === 'true') {
+                overlay.style.display = 'none';
+            } else {
+                const btnReveal = document.getElementById('btnReveal');
+                const btnContainer = document.getElementById('revealBtnContainer');
+                const resultContainer = document.getElementById('revealResultContainer');
+                
+                btnReveal.addEventListener('click', () => {
+                    // Suspense Effect
+                    btnReveal.innerText = "Memeriksa Data Server...";
+                    btnReveal.classList.add('opacity-50', 'pointer-events-none');
+                    
+                    setTimeout(() => {
+                        btnContainer.classList.add('hidden');
+                        
+                        // Change Color
+                        <?php if($status === 'diterima'): ?>
+                            overlay.classList.remove('bg-slate-900');
+                            overlay.classList.add('bg-blue-900');
+                        <?php elseif($status === 'ditolak'): ?>
+                            overlay.classList.remove('bg-slate-900');
+                            overlay.classList.add('bg-red-950');
+                        <?php else: ?>
+                            overlay.classList.remove('bg-slate-900');
+                            overlay.classList.add('bg-orange-950');
+                        <?php endif; ?>
+                        
+                        setTimeout(() => {
+                            resultContainer.classList.remove('hidden');
+                            resultContainer.classList.add('flex');
+                        }, 800);
+                        
+                    }, 1500); 
+                });
+                
+                document.getElementById('btnToDashboard').addEventListener('click', () => {
+                    localStorage.setItem(storageKey, 'true');
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 1500); // Wait for transition
+                });
+            }
+        });
+    </script>
+    <?php endif; ?>
 
     <!-- OVERLAY MOBILE -->
     <div id="mobileOverlay" class="fixed inset-0 bg-slate-900/50 z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
@@ -360,20 +570,37 @@ if($status === 'diterima') {
                                         </li>
                                         <?php endif; ?>
                                         
-                                        <li class="flex items-start gap-3 p-4 bg-white rounded-stitch border border-slate-100 shadow-sm">
+                                        <?php if ($status === 'diterima'): ?>
+                                        <li class="flex items-start gap-3 p-4 bg-emerald-50 rounded-stitch border border-emerald-200 shadow-sm">
                                             <i class="ph ph-printer text-accent text-2xl mt-0.5 shrink-0"></i>
                                             <div class="w-full">
                                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                     <div>
                                                         <p class="font-bold text-slate-800">Cetak Bukti Pendaftaran</p>
-                                                        <p class="text-sm text-slate-500 mt-1">Gunakan berkas ini saat pendaftaran ulang di sekolah.</p>
+                                                        <p class="text-sm text-slate-500 mt-1">Selamat! Anda diterima. Cetak bukti ini untuk daftar ulang di sekolah.</p>
                                                     </div>
-                                                    <a href="cetak_kartu.php" target="_blank" class="<?= $kelengkapan < 100 ? 'opacity-50 pointer-events-none' : '' ?> shrink-0 bg-accent/10 text-accent hover:bg-accent hover:text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors text-center inline-block">
-                                                        <i class="ph ph-download-simple mr-1"></i> Cetak PDF
+                                                    <a href="cetak_kartu.php" target="_blank" class="shrink-0 bg-accent text-white hover:bg-[#0d9466] px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors text-center inline-flex items-center gap-1.5 shadow-lg shadow-accent/25">
+                                                        <i class="ph ph-download-simple"></i> Cetak PDF
                                                     </a>
                                                 </div>
                                             </div>
                                         </li>
+                                        <?php else: ?>
+                                        <li class="flex items-start gap-3 p-4 bg-white rounded-stitch border border-slate-100 shadow-sm opacity-60">
+                                            <i class="ph ph-lock-simple text-slate-400 text-2xl mt-0.5 shrink-0"></i>
+                                            <div class="w-full">
+                                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                    <div>
+                                                        <p class="font-bold text-slate-500">Cetak Bukti Pendaftaran</p>
+                                                        <p class="text-sm text-slate-400 mt-1">Fitur cetak hanya tersedia setelah status Anda dinyatakan <strong class="text-slate-500">Diterima</strong> oleh panitia.</p>
+                                                    </div>
+                                                    <span class="shrink-0 bg-slate-100 text-slate-400 px-4 py-2.5 rounded-lg font-semibold text-sm text-center inline-flex items-center gap-1.5 cursor-not-allowed">
+                                                        <i class="ph ph-lock-simple"></i> Terkunci
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <?php endif; ?>
                                     </ul>
                                 </div>
                             </div>
@@ -407,8 +634,9 @@ if($status === 'diterima') {
                             <p class="text-sm text-slate-500 mt-1">Pastikan data yang diinputkan sesuai dengan dokumen resmi (KK / Ijazah).</p>
                         </div>
 
-                        <form method="POST" enctype="multipart/form-data" class="p-6 md:p-8" id="formSiswa" onsubmit="return handleFormSubmit(this)">
+                        <form method="POST" enctype="multipart/form-data" class="p-6 md:p-8" id="formSiswa">
                             <?= csrf_field() ?>
+                            <input type="hidden" name="simpan" value="1">
 
                             <?php if (!$is_open): ?>
                             <div class="mb-8 p-5 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-4">
@@ -591,7 +819,7 @@ if($status === 'diterima') {
                                         <?php if(!empty($data_siswa['foto'])): ?>
                                             <p class="text-xs text-emerald-600 font-semibold mb-2">✓ Sudah diunggah (<?= $data_siswa['foto'] ?>)</p>
                                         <?php endif; ?>
-                                        <input type="file" name="foto" accept="image/jpeg,image/png" <?= empty($data_siswa['foto']) ? 'required' : '' ?> class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 transition-all cursor-pointer bg-white border border-slate-200 rounded-lg p-1">
+                                        <input type="file" name="foto" accept="image/jpeg,image/png" class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 transition-all cursor-pointer bg-white border border-slate-200 rounded-lg p-1">
                                     </div>
 
                                     <div class="p-5 border border-slate-200 bg-slate-50 rounded-stitch mt-4">
@@ -599,7 +827,7 @@ if($status === 'diterima') {
                                         <?php if(!empty($data_siswa['kk'])): ?>
                                             <p class="text-xs text-emerald-600 font-semibold mb-2">✓ Sudah diunggah (<?= $data_siswa['kk'] ?>)</p>
                                         <?php endif; ?>
-                                        <input type="file" name="kk" accept="image/jpeg,image/png,application/pdf" <?= empty($data_siswa['kk']) ? 'required' : '' ?> class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 transition-all cursor-pointer bg-white border border-slate-200 rounded-lg p-1">
+                                        <input type="file" name="kk" accept="image/jpeg,image/png,application/pdf" class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 transition-all cursor-pointer bg-white border border-slate-200 rounded-lg p-1">
                                     </div>
 
                                     <div class="col-span-1 md:col-span-2 p-5 border border-slate-200 bg-slate-50 rounded-stitch">
@@ -607,7 +835,7 @@ if($status === 'diterima') {
                                         <?php if(!empty($data_siswa['ijazah'])): ?>
                                             <p class="text-xs text-emerald-600 font-semibold mb-2">✓ Sudah diunggah (<?= $data_siswa['ijazah'] ?>)</p>
                                         <?php endif; ?>
-                                        <input type="file" name="ijazah" accept="image/jpeg,image/png,application/pdf" <?= empty($data_siswa['ijazah']) ? 'required' : '' ?> class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 transition-all cursor-pointer bg-white border border-slate-200 rounded-lg p-1">
+                                        <input type="file" name="ijazah" accept="image/jpeg,image/png,application/pdf" class="text-sm w-full file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 transition-all cursor-pointer bg-white border border-slate-200 rounded-lg p-1">
                                     </div>
                                     
                                     <div class="p-5 border border-slate-200 bg-slate-50 rounded-stitch">
@@ -631,7 +859,7 @@ if($status === 'diterima') {
                             </div>
 
                             <div class="pt-6 border-t border-slate-100 flex justify-end">
-                                <button type="submit" name="simpan" id="btnSimpan" class="bg-accent hover:bg-[#0d9466] text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-accent/20 transition-all flex items-center gap-2">
+                                <button type="submit" id="btnSimpan" class="bg-accent hover:bg-[#0d9466] text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-accent/20 transition-all flex items-center gap-2">
                                     <i class="ph ph-floppy-disk text-xl" id="btnIcon"></i> <span id="btnText">Simpan Data Permanen</span>
                                 </button>
                             </div>
@@ -694,24 +922,6 @@ if($status === 'diterima') {
 
     <!-- SCRIPTS -->
     <script>
-        function handleFormSubmit(form) {
-            const btn = document.getElementById('btnSimpan');
-            const icon = document.getElementById('btnIcon');
-            const text = document.getElementById('btnText');
-            
-            // Konfirmasi sebelum simpan
-            if(!confirm('Apakah Anda yakin semua data sudah benar? Proses ini akan menyimpan data secara permanen.')) {
-                return false;
-            }
-            
-            // Loading state
-            btn.disabled = true;
-            btn.classList.add('opacity-70', 'cursor-not-allowed');
-            icon.className = 'ph ph-spinner-gap text-xl animate-spin';
-            text.textContent = 'Menyimpan...';
-            
-            return true;
-        }
 
         // Toggle Sidebar Mobile
         function toggleSidebar() {
@@ -753,12 +963,21 @@ if($status === 'diterima') {
             document.querySelector('.flex-1.overflow-y-auto').scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // Check if there's a success/error message, auto switch to form tab to show it clearly if they were submitting
-        <?php if(isset($_POST['simpan'])): ?>
-            switchTab('form');
-        <?php elseif(isset($_POST['ganti_password'])): ?>
-            switchTab('password');
-        <?php endif; ?>
+        // PRG Pattern: Switch to the correct tab based on GET param (never based on POST)
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetTab = urlParams.get('tab');
+        if (targetTab === 'overview' || targetTab === null || targetTab === '') {
+            <?php if ($get_status === 'saved' || $get_status === 'partial'): ?>
+                switchTab('overview');
+            <?php else: ?>
+                // Default: stay on overview unless explicitly requested
+                const currentTab = targetTab || 'overview';
+                switchTab(currentTab);
+            <?php endif; ?>
+        } else {
+            switchTab(targetTab);
+        }
     </script>
+<?php endif; ?>
 </body>
 </html>

@@ -29,9 +29,13 @@ if (isset($_POST['register'])) {
             $msg = "NISN sudah terdaftar di sistem!";
             $type = "error";
         } else {
-            
-            $stmt_insert = $pdo->prepare("INSERT INTO users_siswa (nisn, nama_lengkap, password, role) VALUES (?, ?, ?, ?)");
-            if ($stmt_insert->execute([$nisn, $nama, $password, $role])) {
+            // Ambil tahun_ajaran aktif dari ppdb_settings
+            $stmt_ta = $pdo->prepare("SELECT setting_value FROM ppdb_settings WHERE setting_key = 'tahun_ajaran'");
+            $stmt_ta->execute();
+            $tahun_ajaran = $stmt_ta->fetchColumn() ?: date('Y') . '/' . (date('Y') + 1);
+
+            $stmt_insert = $pdo->prepare("INSERT INTO users_siswa (nisn, nama_lengkap, password, role, tahun_ajaran) VALUES (?, ?, ?, ?, ?)");
+            if ($stmt_insert->execute([$nisn, $nama, $password, $role, $tahun_ajaran])) {
                 $msg = "Registrasi berhasil! Silakan masuk.";
                 $type = "success";
             } else {

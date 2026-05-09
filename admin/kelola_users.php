@@ -117,6 +117,9 @@ $query = $pdo->query("SELECT * FROM users_admin ORDER BY id ASC");
                 <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold rounded-stitch transition-all group">
                     <i class="ph ph-squares-four text-xl group-hover:scale-110 transition-transform"></i> Dashboard
                 </a>
+                <a href="arsip.php" class="flex items-center gap-3 px-4 py-3.5 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold rounded-stitch transition-all group">
+                    <i class="ph ph-archive text-xl group-hover:scale-110 transition-transform"></i> Arsip Tahun Ajaran
+                </a>
                 <?php if(isset($_SESSION['role_admin']) && $_SESSION['role_admin'] === 'superadmin'): ?>
                 <a href="kelola_users.php" class="flex items-center gap-3 px-4 py-3.5 bg-accent/10 text-accent font-bold rounded-stitch transition-all group">
                     <i class="ph ph-users text-xl group-hover:scale-110 transition-transform"></i> Kelola Panitia

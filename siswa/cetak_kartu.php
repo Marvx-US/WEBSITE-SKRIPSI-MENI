@@ -21,9 +21,32 @@ if (!$data) {
     die("Data tidak ditemukan.");
 }
 
-
-if (empty($data['nama_sd']) || empty($data['foto']) || empty($data['kk'])) {
-    die("Data Anda belum lengkap 100%. Silakan lengkapi data terlebih dahulu.");
+// GUARD: Hanya siswa berstatus 'diterima' yang boleh mencetak bukti pendaftaran.
+// Ini adalah lapisan keamanan backend — tidak bisa dibypass dari URL langsung.
+if ($data['status'] !== 'diterima') {
+    http_response_code(403);
+    die("
+        <!DOCTYPE html><html lang='id'><head><meta charset='UTF-8'>
+        <title>Akses Ditolak | PPDB MTs Al-Barakah</title>
+        <style>
+            body { font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; 
+                   min-height: 100vh; margin: 0; background: #f8faf9; }
+            .box { text-align: center; padding: 48px 40px; background: #fff; border-radius: 20px; 
+                   border: 1px solid #f1f5f9; max-width: 420px; }
+            .icon { font-size: 56px; margin-bottom: 16px; }
+            h2 { color: #1e293b; font-size: 22px; margin: 0 0 12px; }
+            p { color: #64748b; font-size: 14px; line-height: 1.7; margin: 0 0 24px; }
+            a { display: inline-block; background: #10b27c; color: #fff; padding: 12px 28px; 
+                border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 14px; }
+        </style></head><body>
+        <div class='box'>
+            <div class='icon'>🔒</div>
+            <h2>Cetak Belum Tersedia</h2>
+            <p>Bukti pendaftaran hanya dapat dicetak setelah status Anda dinyatakan <strong>Diterima</strong> oleh panitia PPDB. Mohon tunggu pengumuman resmi.</p>
+            <a href='dashboard.php'>Kembali ke Dashboard</a>
+        </div>
+        </body></html>
+    ");
 }
 
 

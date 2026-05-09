@@ -154,6 +154,7 @@ $tables = [
         `akte` varchar(255) DEFAULT NULL,
         `kip` varchar(255) DEFAULT NULL,
         `status` enum('pending','diterima','ditolak','revisi') DEFAULT 'pending',
+        `tahun_ajaran` varchar(20) DEFAULT NULL,
         `pesan_revisi` text DEFAULT NULL,
         `nik` varchar(20) DEFAULT NULL,
         `jenis_kelamin` varchar(20) DEFAULT NULL,
@@ -236,6 +237,7 @@ if ($settingsCount === 0) {
     $defaultSettings = [
         ['jadwal_buka',        date('Y-m-d')],
         ['jadwal_tutup',       date('Y-m-d', strtotime('+60 days'))],
+        ['jadwal_pengumuman',  date('Y-m-d 15:00:00', strtotime('+65 days'))],
         ['info_berkas',        'Siapkan: Fotocopy KK, Ijazah/SKL, Pas Foto 3x4, Akta Kelahiran.'],
         ['info_pengumuman',    ''],
         ['banner_teks',        'Penerimaan Tahun ' . date('Y') . '/' . (date('Y') + 1) . ' Dibuka'],

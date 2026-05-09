@@ -23,10 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_POST['save_jadwal'])) {
     $buka  = $_POST['jadwal_buka'];
     $tutup = $_POST['jadwal_tutup'];
+    $pengumuman = $_POST['jadwal_pengumuman'] ?? null;
     $stmt1 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='jadwal_buka'");
     $stmt1->execute([$buka]);
     $stmt2 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='jadwal_tutup'");
     $stmt2->execute([$tutup]);
+    if ($pengumuman) {
+        $stmt3 = $pdo->prepare("INSERT INTO ppdb_settings (setting_key, setting_value) VALUES ('jadwal_pengumuman', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");
+        $stmt3->execute([$pengumuman]);
+    }
     $success = "Jadwal berhasil diperbarui.";
 }
 
@@ -99,6 +104,7 @@ function getSetting($pdo, $key) {
 
 $jadwal_buka      = getSetting($pdo, 'jadwal_buka');
 $jadwal_tutup     = getSetting($pdo, 'jadwal_tutup');
+$jadwal_pengumuman= getSetting($pdo, 'jadwal_pengumuman');
 $info_berkas      = getSetting($pdo, 'info_berkas');
 $info_pengumuman  = getSetting($pdo, 'info_pengumuman');
 
@@ -161,6 +167,9 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
             <nav class="p-6 space-y-2">
                 <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
                     <i class="ph ph-squares-four text-xl"></i> Dashboard
+                </a>
+                <a href="arsip.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
+                    <i class="ph ph-archive text-xl"></i> Arsip Tahun Ajaran
                 </a>
                 <?php if(($_SESSION['role_admin'] ?? '') === 'superadmin'): ?>
                 <a href="kelola_users.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
@@ -228,19 +237,26 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
                 </div>
                 <form method="POST" class="p-6 md:p-8">
                     <?= csrf_field() ?>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tanggal Pembukaan</label>
-                            <input type="date" name="jadwal_buka" value="<?= $jadwal_buka ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
+                            <input type="date" name="jadwal_buka" value="<?= htmlspecialchars($jadwal_buka) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tanggal Penutupan</label>
-                            <input type="date" name="jadwal_tutup" value="<?= $jadwal_tutup ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
+                            <input type="date" name="jadwal_tutup" value="<?= htmlspecialchars($jadwal_tutup) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Waktu Pengumuman SNBT</label>
+                            <input type="datetime-local" name="jadwal_pengumuman" value="<?= htmlspecialchars($jadwal_pengumuman) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium" required>
                         </div>
                     </div>
                     <div class="mt-6 p-4 bg-slate-50 rounded-xl text-sm text-slate-500 flex items-start gap-3">
                         <i class="ph ph-info text-lg text-blue-400 shrink-0 mt-0.5"></i>
-                        <span>Jika hari ini berada di luar rentang jadwal, form pengisian di portal siswa akan otomatis dikunci dan menampilkan pesan penutupan.</span>
+                        <div>
+                            <p class="mb-1">Jika hari ini berada di luar rentang jadwal buka-tutup, form pengisian di portal siswa akan otomatis dikunci.</p>
+                            <p class="font-bold text-slate-700">Khusus H-1 (24 Jam sebelum Waktu Pengumuman SNBT), dashboard siswa akan terkunci dan berubah menjadi Layar Hitung Mundur Raksasa.</p>
+                        </div>
                     </div>
                     <div class="mt-6 flex justify-end">
                         <button type="submit" name="save_jadwal" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2">
