@@ -192,6 +192,7 @@ $jadwal_tutup    = getPpdbSetting($pdo, 'jadwal_tutup');
 $info_berkas     = getPpdbSetting($pdo, 'info_berkas');
 $info_pengumuman = getPpdbSetting($pdo, 'info_pengumuman');
 $jadwal_pengumuman = getPpdbSetting($pdo, 'jadwal_pengumuman');
+$kontak_wa = getPpdbSetting($pdo, 'kontak_wa') ?: '6281234567890';
 
 $now = time();
 $pengumuman_time = $jadwal_pengumuman ? strtotime($jadwal_pengumuman) : 0;
@@ -618,7 +619,7 @@ if($status === 'diterima') {
                             <div class="card p-6">
                                 <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="ph ph-note-pencil text-accent"></i> Syarat Berkas</h4>
                                 <p class="text-sm text-slate-500 leading-relaxed mb-4"><?= nl2br(htmlspecialchars($info_berkas ?: 'Siapkan: Fotocopy KK, Ijazah, Pas Foto 3x4.')) ?></p>
-                                <a href="https://wa.me/6281234567890" target="_blank" class="w-full flex justify-center items-center gap-2 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl transition-colors text-sm">
+                                <a href="https://wa.me/<?= htmlspecialchars($kontak_wa) ?>" target="_blank" class="w-full flex justify-center items-center gap-2 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold py-2.5 rounded-xl transition-colors text-sm">
                                     <i class="ph ph-whatsapp-logo text-green-500 text-lg"></i> Hubungi Panitia
                                 </a>
                             </div>

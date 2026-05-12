@@ -1,4 +1,5 @@
 <?php
+ob_start(); // Memulai output buffering untuk mencegah spasi tak terlihat merusak PDF
 session_start();
 include '../config/helpers.php';
 include '../config/koneksi.php';
@@ -56,14 +57,19 @@ $options->set('isHtml5ParserEnabled', true);
 $dompdf = new Dompdf($options);
 
 
-$foto_path = '../uploads/' . $data['foto'];
+$foto_path = __DIR__ . '/../uploads/' . $data['foto'];
 $foto_base64 = '';
-if (file_exists($foto_path)) {
+if (file_exists($foto_path) && is_file($foto_path)) {
     $foto_data = file_get_contents($foto_path);
     $foto_base64 = 'data:image/jpeg;base64,' . base64_encode($foto_data);
 } else {
-    
     $foto_base64 = 'https://ui-avatars.com/api/?name=' . urlencode($data['nama_lengkap']) . '&background=EBF4FF&color=4A90E2&size=150';
+}
+
+$logo_path = __DIR__ . '/../assets/img/logo.png';
+$logo_base64 = '';
+if (file_exists($logo_path) && is_file($logo_path)) {
+    $logo_base64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
 }
 
 $html = '
@@ -71,83 +77,136 @@ $html = '
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kartu Pendaftaran PPDB</title>
+    <title>Kartu Tanda Peserta PPDB</title>
     <style>
-        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 14px; color: #333; }
-        .container { width: 100%; border: 2px solid #10b27c; padding: 0; margin: 0 auto; }
-        .header { background: #10b27c; color: #fff; text-align: center; padding: 20px; }
-        .header h2 { margin: 0 0 5px 0; font-size: 22px; text-transform: uppercase; }
-        .header p { margin: 0; font-size: 12px; }
-        .content { padding: 20px; }
-        .photo-area { float: right; width: 120px; height: 160px; border: 1px solid #ccc; text-align: center; }
+        @page { margin: 30px; }
+        body { font-family: "Times New Roman", Times, serif; font-size: 13px; color: #000; line-height: 1.3; }
+        
+        .container { width: 100%; border: 2px solid #000; padding: 5px; box-sizing: border-box; }
+        
+        /* HEADER */
+        .header { border: 2px solid #000; padding: 15px; text-align: center; margin-bottom: 5px; position: relative; }
+        .header-logo { position: absolute; left: 15px; top: 10px; width: 60px; }
+        .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
+        .header h2 { margin: 5px 0 0 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* MAIN CONTENT */
+        .main-content { border: 2px solid #000; margin-bottom: 5px; display: table; width: 100%; }
+        
+        .photo-box { display: table-cell; width: 150px; padding: 10px; border-right: 2px solid #000; vertical-align: top; }
+        .photo-area { width: 130px; height: 170px; border: 1px solid #000; padding: 3px; }
         .photo-area img { width: 100%; height: 100%; object-fit: cover; }
-        .data-area { width: 75%; float: left; }
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 8px 0; vertical-align: top; }
-        .label { font-weight: bold; width: 180px; }
-        .separator { width: 20px; text-align: center; }
-        .footer { clear: both; margin-top: 40px; text-align: center; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px; }
-        .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; background: #e6f7f2; color: #10b27c; border: 1px solid #10b27c; margin-top: 10px; }
+        
+        .data-box { display: table-cell; padding: 10px 15px; vertical-align: top; }
+        .data-label { font-size: 11px; margin-bottom: 2px; }
+        .data-value { font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+        .data-value.large { font-size: 16px; }
+        
+        /* PILIHAN */
+        .pilihan-title { font-weight: bold; font-size: 14px; margin: 5px 0; }
+        .pilihan-table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+        .pilihan-table th, .pilihan-table td { border: 2px solid #000; padding: 8px 10px; text-align: left; vertical-align: top; }
+        .pilihan-table th { font-size: 11px; text-transform: uppercase; background-color: #fff; }
+        .pilihan-table td { font-size: 11px; }
+        .pilihan-list { margin: 0; padding-left: 15px; }
+        .pilihan-list li { margin-bottom: 3px; }
+        
+        /* PERNYATAAN */
+        .pernyataan-box { border: 2px solid #000; padding: 15px; }
+        .pernyataan-title { font-weight: bold; font-size: 16px; margin: 0 0 10px 0; }
+        .pernyataan-text { text-align: justify; font-size: 13px; margin-bottom: 40px; line-height: 1.5; }
+        
+        /* TTD */
+        .ttd-area { width: 100%; height: 100px; position: relative; }
+        .ttd-box { width: 250px; position: absolute; right: 0; top: 0; text-align: center; }
+        .ttd-line { border-bottom: 1px solid #000; margin: 60px 0 5px 0; }
+        .ttd-name { font-size: 13px; }
+        
+        /* FOOTER INFO */
+        .footer-info { clear: both; color: #888; font-size: 10px; margin-top: 30px; }
     </style>
 </head>
 <body>
     <div class="container">
+        
+        <!-- HEADER -->
         <div class="header">
-            <h2>KARTU BUKTI PENDAFTARAN</h2>
-            <p>PANITIA PENERIMAAN PESERTA DIDIK BARU (PPDB)</p>
-            <p>MTs PONDOK PESANTREN DDI AL-BARAKAH</p>
+            <img src="' . $logo_base64 . '" class="header-logo" alt="Logo">
+            <h1>KARTU TANDA PESERTA</h1>
+            <h2>PPDB ' . htmlspecialchars($data['tahun_ajaran'] ?? '2026/2027') . '</h2>
         </div>
-        <div class="content">
-            <div class="photo-area">
-                <img src="' . $foto_base64 . '" alt="Foto Siswa">
-            </div>
-            <div class="data-area">
-                <table>
-                    <tr>
-                        <td class="label">Nomor Registrasi</td>
-                        <td class="separator">:</td>
-                        <td><strong>REG-' . str_pad($data['id'], 5, '0', STR_PAD_LEFT) . '</strong></td>
-                    </tr>
-                    <tr>
-                        <td class="label">NISN</td>
-                        <td class="separator">:</td>
-                        <td>' . htmlspecialchars($data['nisn']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Nama Lengkap</td>
-                        <td class="separator">:</td>
-                        <td>' . htmlspecialchars($data['nama_lengkap']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Tempat, Tanggal Lahir</td>
-                        <td class="separator">:</td>
-                        <td>' . htmlspecialchars($data['tempat_lahir']) . ', ' . date('d F Y', strtotime($data['tanggal_lahir'])) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Jenis Kelamin</td>
-                        <td class="separator">:</td>
-                        <td>' . ($data['jenis_kelamin'] == 'L' ? 'Laki-Laki' : 'Perempuan') . '</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Asal Sekolah</td>
-                        <td class="separator">:</td>
-                        <td>' . htmlspecialchars($data['nama_sd']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Nama Orang Tua/Wali</td>
-                        <td class="separator">:</td>
-                        <td>' . htmlspecialchars($data['nama_ayah']) . '</td>
-                    </tr>
-                </table>
-                <div class="status-badge">
-                    STATUS: ' . strtoupper($data['status'] ? $data['status'] : 'DALAM PROSES VERIFIKASI') . '
+        
+        <!-- MAIN CONTENT (FOTO & DATA) -->
+        <div class="main-content">
+            <div class="photo-box">
+                <div class="photo-area">
+                    <img src="' . $foto_base64 . '" alt="Foto Siswa">
                 </div>
             </div>
+            <div class="data-box">
+                <div class="data-label">Nomor Pendaftaran</div>
+                <div class="data-value large">' . str_pad($data['id'], 10, '0', STR_PAD_LEFT) . '</div>
+                
+                <div class="data-label">Nama Siswa</div>
+                <div class="data-value large">' . strtoupper(htmlspecialchars($data['nama_lengkap'])) . '</div>
+                
+                <div class="data-label">NISN</div>
+                <div class="data-value">' . htmlspecialchars($data['nisn']) . '</div>
+                
+                <div class="data-label">Sekolah Asal</div>
+                <div class="data-value">' . strtoupper(htmlspecialchars($data['nama_sd'])) . '</div>
+                
+                <div class="data-label">Kabupaten / Kota Lahir</div>
+                <div class="data-value">' . strtoupper(htmlspecialchars($data['tempat_lahir'])) . '</div>
+                
+                <div class="data-label">Jalur Pendaftaran</div>
+                <div class="data-value">' . strtoupper(htmlspecialchars($data['jalur_pendaftaran'] ?? 'REGULER')) . '</div>
+            </div>
         </div>
-        <div class="footer">
-            <p>Bawa kartu ini saat melakukan daftar ulang atau ujian seleksi di sekolah.</p>
-            <p>Dicetak pada: ' . date('d M Y H:i:s') . '</p>
+        
+        <!-- JALUR / PILIHAN -->
+        <h3 class="pilihan-title">Tujuan Pendaftaran & Status</h3>
+        <table class="pilihan-table">
+            <tr>
+                <th style="width: 50%;">LEMBAGA TUJUAN</th>
+                <th style="width: 50%;">STATUS PENDAFTARAN</th>
+            </tr>
+            <tr>
+                <td>
+                    <ul class="pilihan-list">
+                        <li>MTs PP DDI AL-BARAKAH</li>
+                        <li>Tingkat: Madrasah Tsanawiyah (SMP)</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul class="pilihan-list">
+                        <li>Status: <strong>' . strtoupper($data['status']) . '</strong></li>
+                        <li>Diterima pada: ' . date('d-m-Y', strtotime($data['updated_at'] ?? $data['created_at'])) . '</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+        
+        <!-- PERNYATAAN -->
+        <div class="pernyataan-box">
+            <h3 class="pernyataan-title">Pernyataan</h3>
+            <div class="pernyataan-text">
+                Saya menyatakan bahwa data yang saya isikan dalam formulir pendaftaran PPDB MTs PP DDI Al-Barakah adalah benar dan saya bersedia menerima ketentuan yang berlaku di Madrasah yang saya tuju. Saya bersedia menerima sanksi pembatalan penerimaan apabila melanggar pernyataan ini atau terbukti memalsukan dokumen persyaratan.
+            </div>
+            
+            <div class="ttd-area">
+                <div class="ttd-box">
+                    <div>ttd.</div>
+                    <div class="ttd-line"></div>
+                    <div class="ttd-name">' . ucwords(strtolower(htmlspecialchars($data['nama_lengkap']))) . '</div>
+                </div>
+            </div>
+            
+            <div class="footer-info">
+                Dicetak pada: ' . date('D, d M Y H:i:s O') . ' - IP: ' . $_SERVER['REMOTE_ADDR'] . '
+            </div>
         </div>
+        
     </div>
 </body>
 </html>
@@ -157,7 +216,9 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
+// Bersihkan seluruh output layar yang bocor (spasi, warning PHP) sebelum mencetak raw PDF
+ob_end_clean();
 
 $dompdf->stream('Kartu_PPDB_' . $data['nisn'] . '.pdf', ['Attachment' => 0]);
-
+exit;
 ?>

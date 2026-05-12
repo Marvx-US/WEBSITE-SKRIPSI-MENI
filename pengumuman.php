@@ -57,6 +57,7 @@ $pengumuman_list = $pdo->query("SELECT * FROM ppdb_pengumuman ORDER BY id DESC")
             <a href="index.php#syarat" class="hover:text-accent transition-colors">Persyaratan</a>
             <a href="index.php#jadwal" class="hover:text-accent transition-colors">Jadwal</a>
             <a href="index.php#galeri" class="hover:text-accent transition-colors">Galeri</a>
+            <a href="index.php#kontak" class="hover:text-accent transition-colors">Kontak</a>
             <a href="pengumuman.php" class="text-accent font-semibold">Pengumuman</a>
         </div>
         <div class="flex items-center gap-2">
@@ -79,6 +80,7 @@ $pengumuman_list = $pdo->query("SELECT * FROM ppdb_pengumuman ORDER BY id DESC")
             <a href="index.php#syarat" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-accent/5 hover:text-accent font-medium transition-colors"><i class="ph ph-clipboard-text text-lg"></i> Persyaratan</a>
             <a href="index.php#jadwal" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-accent/5 hover:text-accent font-medium transition-colors"><i class="ph ph-calendar text-lg"></i> Jadwal</a>
             <a href="index.php#galeri" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-accent/5 hover:text-accent font-medium transition-colors"><i class="ph ph-images text-lg"></i> Galeri</a>
+            <a href="index.php#kontak" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-accent/5 hover:text-accent font-medium transition-colors"><i class="ph ph-phone text-lg"></i> Kontak</a>
             <a href="pengumuman.php" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-accent/5 text-accent font-semibold transition-colors"><i class="ph ph-megaphone text-lg"></i> Pengumuman</a>
             <hr class="border-slate-200 my-2">
             <?php if(!isset($_SESSION['user_id'])): ?>

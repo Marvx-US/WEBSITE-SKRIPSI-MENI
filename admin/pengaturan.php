@@ -62,10 +62,18 @@ if (isset($_POST['save_jadwal'])) {
 if (isset($_POST['save_info'])) {
     $info_berkas     = $_POST['info_berkas'];
     $info_pengumuman = $_POST['info_pengumuman'];
+    
+    // Filter WA: pastikan hanya tersisa angka, lalu sanitasi spasi dll
+    $kontak_wa = preg_replace('/[^0-9]/', '', $_POST['kontak_wa'] ?? '');
+
     $stmt1 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='info_berkas'");
     $stmt1->execute([$info_berkas]);
     $stmt2 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='info_pengumuman'");
     $stmt2->execute([$info_pengumuman]);
+    
+    $stmt3 = $pdo->prepare("INSERT INTO ppdb_settings (setting_key, setting_value) VALUES ('kontak_wa', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");
+    $stmt3->execute([$kontak_wa]);
+    
     $success = "Informasi berhasil diperbarui.";
 }
 
@@ -132,6 +140,7 @@ $jadwal_pengumuman= getSetting($pdo, 'jadwal_pengumuman');
 $tahun_ajaran     = getSetting($pdo, 'tahun_ajaran') ?: (date('Y') . '/' . (date('Y') + 1));
 $info_berkas      = getSetting($pdo, 'info_berkas');
 $info_pengumuman  = getSetting($pdo, 'info_pengumuman');
+$kontak_wa        = getSetting($pdo, 'kontak_wa') ?: '6281234567890';
 
 
 $banner_teks     = getSetting($pdo, 'banner_teks') ?: 'Penerimaan Tahun 2026/2027 Dibuka';
@@ -350,8 +359,18 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Syarat & Informasi Berkas</label>
-                        <textarea name="info_berkas" rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium resize-none"><?= htmlspecialchars($info_berkas) ?></textarea>
-                        <p class="text-xs text-slate-400 mt-1">Tampil di panel bantuan / syarat dokumen dalam dashboard siswa.</p>
+                        <textarea name="info_berkas" rows="4" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium resize-none mb-1"><?= htmlspecialchars($info_berkas) ?></textarea>
+                        <p class="text-xs text-slate-400 mb-4">Tampil di panel bantuan / syarat dokumen dalam dashboard siswa.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nomor WhatsApp Panitia</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                                <i class="ph ph-whatsapp-logo text-xl"></i>
+                            </div>
+                            <input type="text" name="kontak_wa" value="<?= htmlspecialchars($kontak_wa) ?>" class="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium" placeholder="628xxx (Gunakan awalan 62 tanpa +)">
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Nomor ini terhubung dengan semua tombol "Hubungi Panitia" di area publik & siswa.</p>
                     </div>
                     <div class="flex justify-end">
                         <button type="submit" name="save_info" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2">
