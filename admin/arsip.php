@@ -76,43 +76,7 @@ if ($tahun_dipilih !== '') {
     <div id="mobileOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-panel/95 backdrop-blur-xl border-r border-slate-100 flex flex-col justify-between transform -translate-x-full md:translate-x-0 md:static transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] z-50 shrink-0">
-        <div>
-            <div class="h-20 flex items-center justify-between px-8 border-b border-slate-100">
-                <div class="flex items-center gap-3">
-                    <img src="../assets/img/logo.png" alt="Logo" class="w-9 h-9 object-contain">
-                    <h1 class="text-lg font-extrabold tracking-tight">Admin PPDB</h1>
-                </div>
-                <button class="md:hidden w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" onclick="toggleSidebar()">
-                    <i class="ph ph-x text-lg"></i>
-                </button>
-            </div>
-            <nav class="p-6 space-y-2">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium rounded-stitch transition-colors">
-                    <i class="ph ph-squares-four text-xl"></i> Dashboard
-                </a>
-                <a href="arsip.php" class="flex items-center gap-3 px-4 py-3 bg-accent/10 text-accent font-semibold rounded-stitch transition-colors">
-                    <i class="ph ph-archive text-xl"></i> Arsip Tahun Ajaran
-                </a>
-                <?php if(isset($_SESSION['role_admin']) && $_SESSION['role_admin'] === 'superadmin'): ?>
-                <a href="kelola_users.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium rounded-stitch transition-colors">
-                    <i class="ph ph-users text-xl"></i> Kelola Panitia
-                </a>
-                <a href="pengaturan.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium rounded-stitch transition-colors">
-                    <i class="ph ph-gear-six text-xl"></i> Pengaturan PPDB
-                </a>
-                <?php endif; ?>
-            </nav>
-        </div>
-        <div class="p-6 border-t border-slate-100 space-y-2">
-            <a href="../index.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
-                <i class="ph ph-house text-xl"></i> Halaman Depan
-            </a>
-            <a href="../auth/logout.php" class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 font-medium rounded-stitch transition-colors">
-                <i class="ph ph-sign-out text-xl"></i> Keluar Sistem
-            </a>
-        </div>
-    </aside>
+    <?php $active_menu = 'arsip'; include 'layout/sidebar.php'; ?>
 
     <!-- MAIN -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden">

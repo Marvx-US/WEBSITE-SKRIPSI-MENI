@@ -74,7 +74,7 @@ function renderRow($label, $value) {
     <header class="bg-panel border-b border-slate-200 sticky top-0 z-40 shadow-sm no-print">
         <div class="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="dashboard.php" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <a href="verifikasi.php" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
                     <i class="ph ph-arrow-left text-2xl text-slate-600"></i>
                 </a>
                 <h1 class="text-xl font-bold tracking-tight">Detail Lengkap Siswa</h1>
@@ -94,7 +94,7 @@ function renderRow($label, $value) {
         <nav class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 no-print">
             <a href="dashboard.php" class="hover:text-accent transition-colors">Admin</a>
             <i class="ph ph-caret-right text-[10px]"></i>
-            <a href="dashboard.php" class="hover:text-accent transition-colors">Pendaftar</a>
+            <a href="verifikasi.php" class="hover:text-accent transition-colors">Pendaftar</a>
             <i class="ph ph-caret-right text-[10px]"></i>
             <span class="text-slate-900">Detail Siswa</span>
         </nav>

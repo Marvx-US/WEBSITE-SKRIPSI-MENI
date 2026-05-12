@@ -15,20 +15,7 @@ if (isset($_POST['login'])) {
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
 
-        
-        $stmt = $pdo->prepare("SELECT * FROM users_admin WHERE username = ?");
-        $stmt->execute([$username]);
-        $data_admin = $stmt->fetch();
-
-        if ($data_admin && password_verify($password, $data_admin['password'])) {
-            rate_limit_clear($rate_key);
-            $_SESSION['user_id'] = $data_admin['id'];
-            $_SESSION['nama'] = $data_admin['nama_lengkap'] ?? $data_admin['username'];
-            $_SESSION['role'] = 'admin';
-            $_SESSION['role_admin'] = $data_admin['role'];
-            header("Location: ../admin/dashboard.php");
-            exit;
-        }
+        // Query ke tabel siswa (hanya siswa yang boleh login di sini)
 
         
         $stmt = $pdo->prepare("SELECT * FROM users_siswa WHERE nisn = ?");
@@ -101,7 +88,7 @@ if (isset($_POST['login'])) {
                     <span class="text-slate-900">Masuk</span>
                 </nav>
                 <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">Selamat Datang</h1>
-                <p class="text-slate-500 mt-2 text-sm">Masuk dengan NISN (siswa) atau Username (admin)</p>
+                <p class="text-slate-500 mt-2 text-sm">Masuk dengan NISN dan Kata Sandi</p>
             </div>
 
             <?php if($msg): ?>
@@ -116,7 +103,7 @@ if (isset($_POST['login'])) {
                     <label class="block text-sm font-semibold text-slate-700 mb-2">ID Pengguna</label>
                     <div class="relative">
                         <i class="ph ph-identification-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
-                        <input type="text" name="username" required placeholder="NISN atau Username Admin" autocomplete="off" class="input-auth">
+                        <input type="text" name="username" required placeholder="Ketik NISN Anda" autocomplete="off" class="input-auth">
                     </div>
                 </div>
                 <div>

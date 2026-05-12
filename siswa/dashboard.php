@@ -279,7 +279,7 @@ if($status === 'diterima') {
 <body class="bg-surface text-slate-800 antialiased h-screen flex overflow-hidden <?= $is_revealed && $status === 'diterima' ? 'bg-emerald-50' : '' ?>">
 
 <?php if ($is_countdown_phase): ?>
-    <!-- SNBT CINEMATIC COUNTDOWN -->
+    <!-- PPDB CINEMATIC COUNTDOWN -->
     <div class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-6 text-center text-white overflow-hidden">
         <!-- Ambient Background Glow -->
         <div class="absolute w-[80vw] h-[80vw] md:w-[40vw] md:h-[40vw] rounded-full bg-blue-500/20 blur-[120px] pointer-events-none -z-10 mix-blend-screen"></div>
@@ -289,7 +289,7 @@ if($status === 'diterima') {
         <p class="text-xs md:text-sm font-bold uppercase tracking-[0.4em] text-blue-400 mb-6">Hitung Mundur PPDB</p>
         <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight mb-12 max-w-2xl leading-tight">Pengumuman Kelulusan PPDB<br>MTs Al-Barakah Akan Dibuka Dalam</h1>
         
-        <div class="flex items-center gap-3 md:gap-6" id="snbt-timer">
+        <div class="flex items-center gap-3 md:gap-6" id="ppdb-timer">
             <div class="flex flex-col items-center">
                 <div class="w-20 h-24 md:w-32 md:h-36 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-center shadow-2xl">
                     <span class="text-4xl md:text-7xl font-extrabold tabular-nums tracking-tighter" id="cd-hours">00</span>
@@ -329,7 +329,8 @@ if($status === 'diterima') {
                 return;
             }
             
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            // Hitung total jam tersisa tanpa limit 24 jam (jadi kalau misal mau ubah H-3, angkanya jadi 72 jam)
+            const hours = Math.floor(diff / (1000 * 60 * 60));
             const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const secs = Math.floor((diff % (1000 * 60)) / 1000);
             
@@ -345,8 +346,8 @@ if($status === 'diterima') {
 <?php else: ?>
 
     <?php if ($is_revealed): ?>
-    <!-- SNBT REVEAL OVERLAY -->
-    <div id="snbtRevealOverlay" class="fixed inset-0 z-[200] flex flex-col items-center justify-center p-6 text-center text-white overflow-hidden transition-colors duration-[1500ms] bg-slate-900" style="transition-property: background-color, opacity;">
+    <!-- PPDB REVEAL OVERLAY -->
+    <div id="ppdbRevealOverlay" class="fixed inset-0 z-[200] flex flex-col items-center justify-center p-6 text-center text-white overflow-hidden transition-colors duration-[1500ms] bg-slate-900" style="transition-colors, opacity;">
         <!-- The button -->
         <div id="revealBtnContainer" class="flex flex-col items-center">
             <img src="../assets/img/logo.png" alt="Logo" class="w-16 h-16 md:w-20 md:h-20 object-contain mb-8 opacity-80">
@@ -379,7 +380,7 @@ if($status === 'diterima') {
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const overlay = document.getElementById('snbtRevealOverlay');
+            const overlay = document.getElementById('ppdbRevealOverlay');
             if(!overlay) return;
             const storageKey = 'has_seen_announcement_<?= $user_id ?>';
             

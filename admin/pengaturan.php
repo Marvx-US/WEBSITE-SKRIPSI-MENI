@@ -23,16 +23,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_POST['save_jadwal'])) {
     $buka  = $_POST['jadwal_buka'];
     $tutup = $_POST['jadwal_tutup'];
-    $pengumuman = $_POST['jadwal_pengumuman'] ?? null;
-    $stmt1 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='jadwal_buka'");
-    $stmt1->execute([$buka]);
-    $stmt2 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='jadwal_tutup'");
-    $stmt2->execute([$tutup]);
-    if ($pengumuman) {
-        $stmt3 = $pdo->prepare("INSERT INTO ppdb_settings (setting_key, setting_value) VALUES ('jadwal_pengumuman', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");
-        $stmt3->execute([$pengumuman]);
+
+    // Gabungkan tanggal + jam pengumuman
+    $tgl_pengumuman  = $_POST['tgl_pengumuman']  ?? '';
+    $jam_hour        = str_pad($_POST['jam_hour'] ?? '08', 2, '0', STR_PAD_LEFT);
+    $jam_minute      = str_pad($_POST['jam_minute'] ?? '00', 2, '0', STR_PAD_LEFT);
+    $jam_pengumuman  = $jam_hour . ':' . $jam_minute;
+    
+    // VALIDASI LOGIKA WAKTU
+    if (strtotime($tutup) < strtotime($buka)) {
+        $error = "Gagal disimpan: Tanggal Penutupan tidak boleh lebih awal dari Tanggal Pembukaan!";
+    } elseif ($tgl_pengumuman && strtotime($tgl_pengumuman) < strtotime($tutup)) {
+        $error = "Gagal disimpan: Tanggal Pengumuman PPDB tidak boleh mendahului Tanggal Penutupan!";
+    } else {
+        $pengumuman = ($tgl_pengumuman) ? $tgl_pengumuman . 'T' . $jam_pengumuman : null;
+
+        // Auto-generate tahun ajaran dari tahun tanggal buka
+        $tahun_buka   = (int) date('Y', strtotime($buka));
+        $tahun_ajaran = $tahun_buka . '/' . ($tahun_buka + 1);
+
+        $stmt1 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='jadwal_buka'");
+        $stmt1->execute([$buka]);
+        $stmt2 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='jadwal_tutup'");
+        $stmt2->execute([$tutup]);
+
+        if ($pengumuman) {
+            $stmt3 = $pdo->prepare("INSERT INTO ppdb_settings (setting_key, setting_value) VALUES ('jadwal_pengumuman', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");
+            $stmt3->execute([$pengumuman]);
+        }
+
+        $stmt4 = $pdo->prepare("INSERT INTO ppdb_settings (setting_key, setting_value) VALUES ('tahun_ajaran', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)");
+        $stmt4->execute([$tahun_ajaran]);
+
+        $success = "Jadwal berhasil diperbarui. Tahun Ajaran otomatis: <strong>{$tahun_ajaran}</strong>";
     }
-    $success = "Jadwal berhasil diperbarui.";
 }
 
 if (isset($_POST['save_info'])) {
@@ -105,6 +129,7 @@ function getSetting($pdo, $key) {
 $jadwal_buka      = getSetting($pdo, 'jadwal_buka');
 $jadwal_tutup     = getSetting($pdo, 'jadwal_tutup');
 $jadwal_pengumuman= getSetting($pdo, 'jadwal_pengumuman');
+$tahun_ajaran     = getSetting($pdo, 'tahun_ajaran') ?: (date('Y') . '/' . (date('Y') + 1));
 $info_berkas      = getSetting($pdo, 'info_berkas');
 $info_pengumuman  = getSetting($pdo, 'info_pengumuman');
 
@@ -134,15 +159,17 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pengaturan PPDB | Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script>
         tailwind.config = {
             theme: { extend: {
-                fontFamily: { sans: ['Lexend', 'sans-serif'] },
-                colors: { accent: '#10b27c', surface: '#f9fafa', panel: '#ffffff' },
-                borderRadius: { 'stitch': '12px' }
+                fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                colors: { accent: '#10b27c', accentDark: '#0d9466', surface: '#f8faf9', panel: '#ffffff' },
+                borderRadius: { 'stitch': '14px' }
             }}
         }
     </script>
@@ -153,43 +180,7 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
     <div id="mobileOverlay" class="fixed inset-0 bg-slate-900/50 z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-72 bg-panel border-r border-slate-200 flex flex-col justify-between transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 z-50 shrink-0">
-        <div>
-            <div class="h-20 flex items-center justify-between px-8 border-b border-slate-100">
-                <div class="flex items-center">
-                    <img src="../assets/img/logo.png" alt="Logo" class="w-10 h-10 object-contain mr-3">
-                    <h1 class="text-xl font-bold tracking-tight">Admin PPDB</h1>
-                </div>
-                <button class="md:hidden text-slate-400 hover:text-slate-700" onclick="toggleSidebar()">
-                    <i class="ph ph-x text-2xl"></i>
-                </button>
-            </div>
-            <nav class="p-6 space-y-2">
-                <a href="dashboard.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
-                    <i class="ph ph-squares-four text-xl"></i> Dashboard
-                </a>
-                <a href="arsip.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
-                    <i class="ph ph-archive text-xl"></i> Arsip Tahun Ajaran
-                </a>
-                <?php if(($_SESSION['role_admin'] ?? '') === 'superadmin'): ?>
-                <a href="kelola_users.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
-                    <i class="ph ph-users text-xl"></i> Kelola Panitia
-                </a>
-                <a href="pengaturan.php" class="flex items-center gap-3 px-4 py-3 bg-accent/10 text-accent font-semibold rounded-stitch transition-colors">
-                    <i class="ph ph-gear-six text-xl"></i> Pengaturan PPDB
-                </a>
-                <?php endif; ?>
-            </nav>
-        </div>
-        <div class="p-6 border-t border-slate-100 space-y-2">
-            <a href="../index.php" class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 font-medium rounded-stitch transition-colors">
-                <i class="ph ph-house text-xl"></i> Halaman Depan
-            </a>
-            <a href="../auth/logout.php" class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 font-medium rounded-stitch transition-colors">
-                <i class="ph ph-sign-out text-xl"></i> Keluar Sistem
-            </a>
-        </div>
-    </aside>
+    <?php $active_menu = 'pengaturan'; include 'layout/sidebar.php'; ?>
 
     <!-- MAIN -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden">
@@ -224,6 +215,12 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
             </div>
             <?php endif; ?>
 
+            <?php if ($error): ?>
+            <div class="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl font-medium flex items-center gap-3">
+                <i class="ph ph-warning-circle text-xl shrink-0"></i> <?= $error ?>
+            </div>
+            <?php endif; ?>
+
             <!-- ===== PANEL 1: JADWAL ===== -->
             <section class="bg-panel rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
                 <div class="p-6 md:p-8 border-b border-slate-100 flex items-center gap-4">
@@ -235,35 +232,96 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
                         <p class="text-sm text-slate-400">Atur kapan portal pendaftaran siswa buka dan tutup secara otomatis.</p>
                     </div>
                 </div>
-                <form method="POST" class="p-6 md:p-8">
+                <form method="POST" class="p-6 md:p-8" id="formJadwal">
                     <?= csrf_field() ?>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- Preview Tahun Ajaran Otomatis -->
+                    <div class="mb-6 flex items-center gap-3 p-4 bg-accent/5 border border-accent/20 rounded-2xl">
+                        <div class="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                            <i class="ph ph-graduation-cap text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tahun Ajaran Aktif — Otomatis</p>
+                            <p class="text-lg font-extrabold text-accent" id="previewTahunAjaran"><?= htmlspecialchars($tahun_ajaran) ?></p>
+                        </div>
+                        <div class="ml-auto text-xs text-slate-400 italic hidden md:block">Dihitung otomatis dari Tanggal Pembukaan</div>
+                    </div>
+
+                    <!-- Periode Pendaftaran -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tanggal Pembukaan</label>
-                            <input type="date" name="jadwal_buka" value="<?= htmlspecialchars($jadwal_buka) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
+                            <input type="date" name="jadwal_buka" id="inputJadwalBuka" value="<?= htmlspecialchars($jadwal_buka) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tanggal Penutupan</label>
                             <input type="date" name="jadwal_tutup" value="<?= htmlspecialchars($jadwal_tutup) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
                         </div>
+                    </div>
+
+                    <!-- Pengumuman PPDB -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Waktu Pengumuman SNBT</label>
-                            <input type="datetime-local" name="jadwal_pengumuman" value="<?= htmlspecialchars($jadwal_pengumuman) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium" required>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tanggal Pengumuman PPDB</label>
+                            <input type="date" name="tgl_pengumuman" value="<?= htmlspecialchars(substr($jadwal_pengumuman, 0, 10)) ?>" class="w-full border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Jam Pengumuman PPDB</label>
+                            <?php
+                                $saved_time = substr($jadwal_pengumuman, 11, 5) ?: '08:00';
+                                $parts = explode(':', $saved_time);
+                                $saved_h = $parts[0] ?? '08';
+                                $saved_m = $parts[1] ?? '00';
+                            ?>
+                            <div class="flex items-center gap-2">
+                                <div class="relative w-full">
+                                    <select name="jam_hour" class="w-full border border-slate-200 rounded-xl pl-4 pr-10 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-bold text-slate-700 bg-white appearance-none cursor-pointer hover:border-slate-300 tabular-nums">
+                                        <?php for($i=0; $i<=23; $i++): $val = str_pad($i, 2, '0', STR_PAD_LEFT); ?>
+                                        <option value="<?= $val ?>" <?= $val === $saved_h ? 'selected' : '' ?>><?= $val ?> (Jam)</option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                </div>
+                                <span class="text-2xl font-extrabold text-slate-300 mb-1">:</span>
+                                <div class="relative w-full">
+                                    <select name="jam_minute" class="w-full border border-slate-200 rounded-xl pl-4 pr-10 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-bold text-slate-700 bg-white appearance-none cursor-pointer hover:border-slate-300 tabular-nums">
+                                        <?php for($i=0; $i<=59; $i++): $val = str_pad($i, 2, '0', STR_PAD_LEFT); ?>
+                                        <option value="<?= $val ?>" <?= $val === $saved_m ? 'selected' : '' ?>><?= $val ?> (Menit)</option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-6 p-4 bg-slate-50 rounded-xl text-sm text-slate-500 flex items-start gap-3">
+
+                    <div class="p-4 bg-slate-50 rounded-xl text-sm text-slate-500 flex items-start gap-3">
                         <i class="ph ph-info text-lg text-blue-400 shrink-0 mt-0.5"></i>
                         <div>
                             <p class="mb-1">Jika hari ini berada di luar rentang jadwal buka-tutup, form pengisian di portal siswa akan otomatis dikunci.</p>
-                            <p class="font-bold text-slate-700">Khusus H-1 (24 Jam sebelum Waktu Pengumuman SNBT), dashboard siswa akan terkunci dan berubah menjadi Layar Hitung Mundur Raksasa.</p>
+                            <p class="font-bold text-slate-700">Khusus H-1 (24 Jam sebelum Waktu Pengumuman PPDB), dashboard siswa akan terkunci dan berubah menjadi Layar Hitung Mundur Raksasa.</p>
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end">
-                        <button type="submit" name="save_jadwal" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2">
+                        <button type="submit" name="save_jadwal" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2 active:scale-[0.98]">
                             <i class="ph ph-floppy-disk"></i> Simpan Jadwal
                         </button>
                     </div>
                 </form>
+
+                <script>
+                    // Live preview: update Tahun Ajaran badge saat tanggal buka diganti
+                    const inputBuka = document.getElementById('inputJadwalBuka');
+                    const previewTA = document.getElementById('previewTahunAjaran');
+                    if (inputBuka && previewTA) {
+                        inputBuka.addEventListener('change', () => {
+                            const tahun = new Date(inputBuka.value).getFullYear();
+                            if (!isNaN(tahun)) {
+                                previewTA.textContent = tahun + '/' + (tahun + 1);
+                            }
+                        });
+                    }
+                </script>
             </section>
 
             <!-- ===== PANEL 2: INFORMASI BERKAS ===== -->
