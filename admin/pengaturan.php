@@ -273,23 +273,29 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
                                 $saved_h = $parts[0] ?? '08';
                                 $saved_m = $parts[1] ?? '00';
                             ?>
-                            <div class="flex items-center gap-2">
-                                <div class="relative w-full">
-                                    <select name="jam_hour" class="w-full border border-slate-200 rounded-xl pl-4 pr-10 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-bold text-slate-700 bg-white appearance-none cursor-pointer hover:border-slate-300 tabular-nums">
-                                        <?php for($i=0; $i<=23; $i++): $val = str_pad($i, 2, '0', STR_PAD_LEFT); ?>
-                                        <option value="<?= $val ?>" <?= $val === $saved_h ? 'selected' : '' ?>><?= $val ?> (Jam)</option>
-                                        <?php endfor; ?>
-                                    </select>
-                                    <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                            <div class="flex items-center gap-3">
+                                <!-- Stepper Jam -->
+                                <div class="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:border-accent focus-within:bg-white focus-within:ring-4 focus-within:ring-accent/10 transition-all h-[52px]">
+                                    <button type="button" onclick="ubahWaktu('jam', -1)" class="w-12 h-full flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
+                                        <i class="ph ph-minus font-bold"></i>
+                                    </button>
+                                    <input type="text" name="jam_hour" id="input_jam" value="<?= $saved_h ?>" class="flex-1 w-full text-center font-extrabold text-slate-800 text-lg outline-none tabular-nums bg-transparent" maxlength="2" onchange="validasiWaktu(this, 23)">
+                                    <button type="button" onclick="ubahWaktu('jam', 1)" class="w-12 h-full flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
+                                        <i class="ph ph-plus font-bold"></i>
+                                    </button>
                                 </div>
-                                <span class="text-2xl font-extrabold text-slate-300 mb-1">:</span>
-                                <div class="relative w-full">
-                                    <select name="jam_minute" class="w-full border border-slate-200 rounded-xl pl-4 pr-10 py-3 outline-none focus:border-accent focus:ring-4 focus:ring-accent/10 transition-all font-bold text-slate-700 bg-white appearance-none cursor-pointer hover:border-slate-300 tabular-nums">
-                                        <?php for($i=0; $i<=59; $i++): $val = str_pad($i, 2, '0', STR_PAD_LEFT); ?>
-                                        <option value="<?= $val ?>" <?= $val === $saved_m ? 'selected' : '' ?>><?= $val ?> (Menit)</option>
-                                        <?php endfor; ?>
-                                    </select>
-                                    <i class="ph ph-caret-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                                
+                                <span class="text-2xl font-extrabold text-slate-300 pb-1 animate-pulse">:</span>
+                                
+                                <!-- Stepper Menit -->
+                                <div class="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:border-accent focus-within:bg-white focus-within:ring-4 focus-within:ring-accent/10 transition-all h-[52px]">
+                                    <button type="button" onclick="ubahWaktu('menit', -1)" class="w-12 h-full flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
+                                        <i class="ph ph-minus font-bold"></i>
+                                    </button>
+                                    <input type="text" name="jam_minute" id="input_menit" value="<?= $saved_m ?>" class="flex-1 w-full text-center font-extrabold text-slate-800 text-lg outline-none tabular-nums bg-transparent" maxlength="2" onchange="validasiWaktu(this, 59)">
+                                    <button type="button" onclick="ubahWaktu('menit', 1)" class="w-12 h-full flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors active:scale-95">
+                                        <i class="ph ph-plus font-bold"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -482,7 +488,30 @@ $is_open = ($today >= $jadwal_buka && $today <= $jadwal_tutup);
     </main>
 
     <script>
-        function toggleSidebar() {
+    function ubahWaktu(tipe, arah) {
+        const el = document.getElementById('input_' + tipe);
+        let val = parseInt(el.value) || 0;
+        const max = tipe === 'jam' ? 23 : 59;
+        
+        // Loncat 5 menit untuk kecepatan, jam tetap loncat 1
+        const step = tipe === 'menit' ? 5 : 1; 
+        
+        val += (arah * step);
+        
+        if (val > max) val = (tipe === 'menit') ? val - 60 : 0;
+        if (val < 0) val = (tipe === 'menit') ? 60 + val : max;
+        
+        el.value = val.toString().padStart(2, '0');
+    }
+
+    function validasiWaktu(el, max) {
+        let val = parseInt(el.value) || 0;
+        if (val > max) val = max;
+        if (val < 0) val = 0;
+        el.value = val.toString().padStart(2, '0');
+    }
+
+    function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobileOverlay');
             sidebar.classList.toggle('-translate-x-full');

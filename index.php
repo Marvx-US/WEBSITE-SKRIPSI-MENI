@@ -10,16 +10,24 @@ function getSetting($pdo, $key, $default = '') {
 }
 
 $banner_teks = getSetting($pdo, 'banner_teks', 'Penerimaan Tahun 2026/2027 Dibuka');
-$persyaratan = [
+
+// Fallback default
+$default_persyaratan = [
     ['icon'=>'ph-certificate','judul'=>'Ijazah / SKL','desc'=>'Scan dokumen asli atau fotokopi legalisir dari SD/MI asal.'],
     ['icon'=>'ph-users-three','judul'=>'Kartu Keluarga','desc'=>'Scan KK asli terbaru dengan NIK siswa dan nama orang tua jelas.'],
     ['icon'=>'ph-user-focus','judul'=>'Pas Foto 3x4','desc'=>'Foto formal latar merah/biru, format JPG/PNG.'],
 ];
-$jadwal = [
-    ['tgl'=>'1 Mei - 30 Jun','nama'=>'Pendaftaran Daring','desc'=>'Buat akun, isi biodata, upload berkas via portal.','active'=>false],
-    ['tgl'=>'5 Juli','nama'=>'Pengumuman','desc'=>'Hasil verifikasi diumumkan di halaman pengumuman.','active'=>true],
-    ['tgl'=>'6 - 10 Juli','nama'=>'Daftar Ulang','desc'=>'Serahkan berkas fisik ke madrasah.','active'=>false],
+$default_jadwal = [
+    ['tanggal'=>'1 Mei - 30 Jun','nama'=>'Pendaftaran Daring','desc'=>'Buat akun, isi biodata, upload berkas via portal.','style'=>'normal'],
+    ['tanggal'=>'5 Juli','nama'=>'Pengumuman','desc'=>'Hasil verifikasi diumumkan di halaman pengumuman.','style'=>'accent'],
+    ['tanggal'=>'6 - 10 Juli','nama'=>'Daftar Ulang','desc'=>'Serahkan berkas fisik ke madrasah.','style'=>'normal'],
 ];
+
+$db_persyaratan = getSetting($pdo, 'persyaratan_json');
+$db_jadwal = getSetting($pdo, 'jadwal_json');
+
+$persyaratan = $db_persyaratan ? json_decode($db_persyaratan, true) : $default_persyaratan;
+$jadwal = $db_jadwal ? json_decode($db_jadwal, true) : $default_jadwal;
 
 $stmt_total = $pdo->query("SELECT COUNT(*) FROM users_siswa");
 $total_siswa = $stmt_total->fetchColumn();
@@ -236,13 +244,13 @@ $total_lulus = $stmt_lulus->fetchColumn();
         <div class="relative">
             <div class="absolute left-5 md:left-6 top-0 bottom-0 w-px bg-slate-200"></div>
             <div class="space-y-6">
-                <?php foreach($jadwal as $j): $isA=$j['active']; ?>
+                <?php foreach($jadwal as $j): $isA = (isset($j['style']) && $j['style'] === 'accent'); ?>
                 <div class="relative pl-14 md:pl-16">
-                    <div class="absolute left-3 md:left-4 top-1 w-4 h-4 rounded-full border-[3px] <?= $isA ? 'border-accent bg-accent/20 shadow-lg shadow-accent/30' : 'border-slate-300 bg-white' ?>"></div>
-                    <div class="<?= $isA ? 'bg-accent/5 border-accent/20' : 'bg-surface border-slate-100' ?> border rounded-2xl p-5">
-                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-2 <?= $isA ? 'bg-accent/10 text-accent' : 'bg-slate-100 text-slate-600' ?>"><?= htmlspecialchars($j['tgl']) ?></span>
-                        <h4 class="font-bold text-slate-800 text-base"><?= htmlspecialchars($j['nama']) ?></h4>
-                        <p class="text-sm text-slate-500 mt-1"><?= htmlspecialchars($j['desc']) ?></p>
+                    <div class="absolute left-3 md:left-4 top-1 w-4 h-4 rounded-full border-[3px] <?= $isA ? 'border-accent bg-accent/20 shadow-lg shadow-accent/30 animate-pulse' : 'border-slate-300 bg-white' ?>"></div>
+                    <div class="<?= $isA ? 'bg-accent/5 border-accent/20' : 'bg-surface border-slate-100' ?> border rounded-2xl p-5 card-lift">
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold mb-2 <?= $isA ? 'bg-accent/10 text-accent' : 'bg-slate-100 text-slate-600' ?>"><?= htmlspecialchars($j['tanggal'] ?? $j['tgl'] ?? '') ?></span>
+                        <h4 class="font-bold text-slate-800 text-base"><?= htmlspecialchars($j['nama'] ?? '') ?></h4>
+                        <p class="text-sm text-slate-500 mt-1"><?= htmlspecialchars($j['desc'] ?? '') ?></p>
                     </div>
                 </div>
                 <?php endforeach; ?>
