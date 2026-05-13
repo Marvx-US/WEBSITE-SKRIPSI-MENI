@@ -68,6 +68,17 @@ CREATE TABLE `users_admin` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `users_admin`
+--
+
+LOCK TABLES `users_admin` WRITE;
+/*!40000 ALTER TABLE `users_admin` DISABLE KEYS */;
+INSERT INTO `users_admin` (`username`, `password`, `nama_lengkap`, `role`) VALUES ('admin','$2y$10$b0VdGPJg6rm6BBQ0Q4UF4e/09oWark5AX.vHiUGWTW5Rf6k4y8H0q','Administrator','superadmin');
+/*!40000 ALTER TABLE `users_admin` ENABLE KEYS */;
+UNLOCK TABLES;
+
+
+--
 -- Table structure for table `users_siswa`
 --
 
