@@ -38,9 +38,10 @@ if (isset($_POST['save_jadwal'])) {
     } else {
         $pengumuman = ($tgl_pengumuman) ? $tgl_pengumuman . 'T' . $jam_pengumuman : null;
 
-        // Auto-generate tahun ajaran dari tahun tanggal buka
-        $tahun_buka   = (int) date('Y', strtotime($buka));
-        $tahun_ajaran = $tahun_buka . '/' . ($tahun_buka + 1);
+        // Auto-generate tahun ajaran dari tahun tanggal buka (Gunakan tahun sekarang jika tanggal buka tidak valid)
+        $timestamp_buka = strtotime($buka);
+        $tahun_buka     = ($timestamp_buka) ? (int) date('Y', $timestamp_buka) : (int) date('Y');
+        $tahun_ajaran   = $tahun_buka . '/' . ($tahun_buka + 1);
 
         $stmt1 = $pdo->prepare("UPDATE ppdb_settings SET setting_value=? WHERE setting_key='jadwal_buka'");
         $stmt1->execute([$buka]);

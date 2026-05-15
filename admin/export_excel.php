@@ -25,7 +25,9 @@ $sheet = $spreadsheet->getActiveSheet();
 
 $title_suffix = '';
 if ($tahun_filter !== '') {
-    $title_suffix = ' TA ' . $tahun_filter;
+    // Jika terlanjur 1970, tampilkan keterangan lebih sopan
+    $display_tahun = ($tahun_filter === '1970/1971') ? 'Belum Diatur' : $tahun_filter;
+    $title_suffix = ' TA ' . $display_tahun;
 }
 
 if ($status_filter === 'all') {
@@ -81,7 +83,16 @@ $rowIdx = 4;
 $no = 1;
 
 while ($row = $stmt->fetch()) {
-    $ttl = ($row['tempat_lahir'] ?? '-') . ', ' . ($row['tanggal_lahir'] ?? '-');
+    // Format Tanggal Lahir Indonesia
+    $tgl_raw = $row['tanggal_lahir'] ?? '';
+    $tgl_formatted = '-';
+    if ($tgl_raw && $tgl_raw !== '0000-00-00') {
+        $bulan = [1=>'Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        $split = explode('-', $tgl_raw);
+        $tgl_formatted = $split[2] . ' ' . $bulan[(int)$split[1]] . ' ' . $split[0];
+    }
+
+    $ttl = ($row['tempat_lahir'] ?? '-') . ', ' . $tgl_formatted;
     $jk = ($row['jenis_kelamin'] ?? '') == 'L' ? 'Laki-laki' : (($row['jenis_kelamin'] ?? '') == 'P' ? 'Perempuan' : '-');
 
     $sheet->setCellValue('A' . $rowIdx, $no++);

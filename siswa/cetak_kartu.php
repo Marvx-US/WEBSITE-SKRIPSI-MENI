@@ -22,6 +22,19 @@ if (!$data) {
     die("Data tidak ditemukan.");
 }
 
+// Ambil jadwal pengumuman dari settings untuk ditampilkan sebagai tanggal diterima
+$stmt_setting = $pdo->prepare("SELECT setting_value FROM ppdb_settings WHERE setting_key = 'jadwal_pengumuman'");
+$stmt_setting->execute();
+$tgl_pengumuman_raw = $stmt_setting->fetchColumn();
+
+// Format tanggal (Gunakan jadwal_pengumuman jika ada, jika tidak ada gunakan tgl_buat dari data siswa)
+$tgl_diterima = "-";
+if ($tgl_pengumuman_raw) {
+    $tgl_diterima = date('d-m-Y', strtotime($tgl_pengumuman_raw));
+} elseif (!empty($data['tgl_buat'])) {
+    $tgl_diterima = date('d-m-Y', strtotime($data['tgl_buat']));
+}
+
 // GUARD: Hanya siswa berstatus 'diterima' yang boleh mencetak bukti pendaftaran.
 // Ini adalah lapisan keamanan backend — tidak bisa dibypass dari URL langsung.
 if ($data['status'] !== 'diterima') {
@@ -181,7 +194,7 @@ $html = '
                 <td>
                     <ul class="pilihan-list">
                         <li>Status: <strong>' . strtoupper($data['status']) . '</strong></li>
-                        <li>Diterima pada: ' . date('d-m-Y', strtotime($data['updated_at'] ?? $data['created_at'])) . '</li>
+                        <li>Diterima pada: ' . $tgl_diterima . '</li>
                     </ul>
                 </td>
             </tr>
