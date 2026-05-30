@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 27, 2026 at 01:28 PM
+-- Generation Time: May 31, 2026 at 07:22 AM
 -- Server version: 8.0.30
--- PHP Version: 8.3.24
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,82 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `ppdb`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `password_resets`
---
-
-CREATE TABLE `password_resets` (
-  `id` int NOT NULL,
-  `user_id` int NOT NULL,
-  `token` char(64) COLLATE utf8mb4_general_ci NOT NULL,
-  `expires_at` datetime NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pendaftar`
---
-
-CREATE TABLE `pendaftar` (
-  `id` int NOT NULL,
-  `user_id` int DEFAULT NULL,
-  `nama_lengkap` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nisn` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tempat_lahir` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tgl_lahir` date DEFAULT NULL,
-  `jenis_kelamin` enum('Laki-laki','Perempuan') COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `alamat_desa` text COLLATE utf8mb4_general_ci,
-  `asal_sekolah` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `no_hp_ortu` varchar(15) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `status_verifikasi` enum('Proses','Diterima','Ditolak') COLLATE utf8mb4_general_ci DEFAULT 'Proses',
-  `tgl_daftar` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `nilai_ujian` decimal(10,2) DEFAULT NULL,
-  `foto_siswa` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `ijazah_file` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `kk_file` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `pendaftar`
---
-
-INSERT INTO `pendaftar` (`id`, `user_id`, `nama_lengkap`, `nisn`, `tempat_lahir`, `tgl_lahir`, `jenis_kelamin`, `alamat_desa`, `asal_sekolah`, `no_hp_ortu`, `status_verifikasi`, `tgl_daftar`, `nilai_ujian`, `foto_siswa`, `ijazah_file`, `kk_file`) VALUES
-(1, 1, 'Citra', NULL, NULL, NULL, NULL, 'sereang', NULL, '082393282702', 'Diterima', '2026-04-15 03:01:37', 890.00, '1776222097_Screenshot 2026-04-14 142853.png', '1776222097_gambar-kartun-anak-sekolah-smp-keren-1.png', '1776222097_Screenshot 2026-01-20 235326.png');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pendaftaran`
---
-
-CREATE TABLE `pendaftaran` (
-  `id` int NOT NULL,
-  `user_id` int DEFAULT NULL,
-  `nama_lengkap` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nisn` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `jenis_kelamin` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `asal_sekolah` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `status_verifikasi` enum('pending','diterima','ditolak') COLLATE utf8mb4_general_ci DEFAULT 'pending',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `pengumuman`
---
-
-CREATE TABLE `pengumuman` (
-  `id` int NOT NULL,
-  `judul` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `isi` text COLLATE utf8mb4_general_ci NOT NULL,
-  `tanggal` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -129,16 +53,8 @@ CREATE TABLE `ppdb_settings` (
 --
 
 INSERT INTO `ppdb_settings` (`id`, `setting_key`, `setting_value`, `setting_label`, `updated_at`) VALUES
-(1, 'jadwal_buka', '2026-04-01', 'Tanggal Pembukaan Pendaftaran', '2026-05-12 14:02:54'),
-(2, 'jadwal_tutup', '2026-05-11', 'Tanggal Penutupan Pendaftaran', '2026-05-12 14:08:23'),
-(3, 'info_berkas', 'Siapkan dokumen berikut: (1) Fotocopy Kartu Keluarga, (2) Ijazah/SKL SD/MI, (3) Pas Foto 3x4 terbaru, (4) Akte Kelahiran. Semua dokumen dalam format JPG atau PDF.', 'Informasi Syarat Berkas', '2026-05-02 13:30:55'),
-(4, 'info_pengumuman', 'Pendaftaran Peserta Didik Baru (PPDB) MTs Al-Barakah sedang dibuka. Lengkapi data Anda sebelum batas waktu yang ditentukan.', 'Teks Pengumuman Utama', '2026-05-02 13:30:55'),
-(5, 'form_config', '{\"nik\":{\"aktif\":true,\"label\":\"Nomor Induk Kependudukan (NIK)\"},\"jenis_kelamin\":{\"aktif\":true,\"label\":\"Jenis Kelamin\"},\"tempat_lahir\":{\"aktif\":true,\"label\":\"Tempat Lahir\"},\"tgl_lahir\":{\"aktif\":true,\"label\":\"Tanggal Lahir\"},\"nama_ayah\":{\"aktif\":true,\"label\":\"Nama Lengkap Ayah\"},\"pekerjaan_ayah\":{\"aktif\":true,\"label\":\"Pekerjaan Ayah\"},\"nama_ibu\":{\"aktif\":true,\"label\":\"Nama Lengkap Ibu\"},\"pekerjaan_ibu\":{\"aktif\":true,\"label\":\"Pekerjaan Ibu\"},\"hp_ortu\":{\"aktif\":true,\"label\":\"Nomor WhatsApp Aktif\"},\"nama_sd\":{\"aktif\":true,\"label\":\"Nama SD\\/MI Asal\"},\"anak_ke\":{\"aktif\":false,\"label\":\"Anak Ke\"},\"jumlah_saudara\":{\"aktif\":false,\"label\":\"Jumlah Saudara\"},\"nama_wali\":{\"aktif\":false,\"label\":\"Nama Wali\"},\"pekerjaan_wali\":{\"aktif\":false,\"label\":\"Pekerjaan Wali\"},\"ekstrakurikuler\":{\"aktif\":false,\"label\":\"Minat Ekstrakurikuler\"},\"prestasi\":{\"aktif\":false,\"label\":\"Prestasi yang Dimiliki\"}}', 'Konfigurasi Field Formulir Siswa', '2026-05-02 13:30:55'),
-(14, 'jadwal_json', '[{\"tanggal\":\"1 Mei - 30 Juni\",\"nama\":\"Pendaftaran Daring\",\"desc\":\"Pembuatan akun, pengisian data biodata, dan pengunggahan berkas persyaratan melalui portal ini.\",\"style\":\"normal\"},{\"tanggal\":\"5 Juli\",\"nama\":\"Pengumuman Kelulusan\",\"desc\":\"Hasil verifikasi berkas dan pengumuman diterima akan diperbarui secara real-time pada dashboard siswa.\",\"style\":\"accent\"},{\"tanggal\":\"6 - 10 Juli\",\"nama\":\"Daftar Ulang\",\"desc\":\"Proses pendaftaran ulang dengan menyerahkan berkas fisik ke madrasah bagi peserta didik yang dinyatakan lulus.\",\"style\":\"accent\"},{\"tanggal\":\"11 - 20 Juli\",\"nama\":\"Testing Tahap\",\"desc\":\"Testing Tahap Higlight\",\"style\":\"accent\"},{\"tanggal\":\"21 - 25 Juli \",\"nama\":\"Testing Tahap\",\"desc\":\"Testing Tahap Normal\",\"style\":\"normal\"}]', NULL, '2026-05-12 15:12:21'),
-(15, 'jadwal_pengumuman', '2026-05-12T22:14', NULL, '2026-05-12 14:12:44'),
-(34, 'tahun_ajaran', '2026/2027', NULL, '2026-05-12 13:50:32'),
-(83, 'persyaratan_json', '[{\"icon\":\"ph-certificate\",\"judul\":\"Surat Keterangan Lulus (SKL) \\/ Ijazah\",\"desc\":\"Scan dokumen asli atau fotokopi yang telah dilegalisir dari sekolah dasar\\/sederajat asal. Diunggah dalam format PDF.\"},{\"icon\":\"ph-users-three\",\"judul\":\"Kartu Keluarga (KK)\",\"desc\":\"Scan Kartu Keluarga asli terbaru. Pastikan Nomor Induk Kependudukan (NIK) siswa dan nama orang tua tercantum dengan jelas.\"},{\"icon\":\"ph-user-focus\",\"judul\":\"Pas Foto Terbaru\",\"desc\":\"Foto setengah badan dengan pakaian formal (seragam asal), latar belakang warna merah atau biru. Format yang diterima adalah gambar (JPG\\/PNG).\"},{\"icon\":\"ph ph-align-center-vertical-simple\",\"judul\":\"Testing Dokumen\",\"desc\":\"Ini merupakan Testing Dokumen\"}]', NULL, '2026-05-12 15:11:00'),
-(86, 'banner_teks', 'Penerimaan Tahun Testing Dibuka', NULL, '2026-05-12 15:13:30');
+(89, 'jadwal_pengumuman', '2026-05-16T08:00', NULL, '2026-05-16 21:43:19'),
+(90, 'tahun_ajaran', '2026/2027', NULL, '2026-05-16 21:43:51');
 
 -- --------------------------------------------------------
 
@@ -148,11 +64,11 @@ INSERT INTO `ppdb_settings` (`id`, `setting_key`, `setting_value`, `setting_labe
 
 CREATE TABLE `users_admin` (
   `id` int NOT NULL,
-  `username` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `password` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nama_lengkap` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `role` enum('superadmin','verifikator') COLLATE utf8mb4_general_ci DEFAULT 'verifikator',
-  `face_descriptor` text COLLATE utf8mb4_general_ci
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nama_lengkap` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `role` enum('superadmin','verifikator') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'verifikator',
+  `face_descriptor` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -160,9 +76,10 @@ CREATE TABLE `users_admin` (
 --
 
 INSERT INTO `users_admin` (`id`, `username`, `password`, `nama_lengkap`, `role`, `face_descriptor`) VALUES
-(1, 'admin', '$2y$10$eFDgMaHukGer93WbnYBEuuFzgZrRLR0GbHLcud4JqBW4gZGXqKZAy', 'Super Admin', 'superadmin', '[-0.14056262373924255,0.06636202335357666,0.0867825597524643,-0.04565996676683426,-0.0329434871673584,-0.04706030339002609,-0.010440223850309849,-0.11248400807380676,0.19541198015213013,-0.0940723568201065,0.3111959397792816,0.007875805720686913,-0.20638498663902283,-0.11739788204431534,0.02396388351917267,0.13755270838737488,-0.2268618941307068,-0.0880017802119255,-0.03295980021357536,-0.11393129080533981,0.01915661059319973,-0.07119382917881012,0.0924108475446701,0.044286098331213,-0.09123765677213669,-0.34048017859458923,-0.09704858064651489,-0.10692635923624039,0.0696181207895279,-0.05738097429275513,-0.02752736210823059,-0.02224770374596119,-0.23408721387386322,0.019825631752610207,-0.06505142897367477,0.018795229494571686,0.03880354389548302,-0.06058594956994057,0.1814839243888855,-0.004533800296485424,-0.17122426629066467,-0.07574653625488281,-0.08272548019886017,0.203452005982399,0.1433926820755005,-0.03280201181769371,0.043782737106084824,-0.06356361508369446,0.0467783659696579,-0.16316989064216614,0.10934329032897949,0.15380170941352844,0.08766535669565201,-0.020084388554096222,-0.04709542170166969,-0.1332882195711136,-0.06293322890996933,0.10954193025827408,-0.13238942623138428,0.06520845741033554,0.0758446753025055,-0.11313062161207199,-0.08364725112915039,-0.04129098728299141,0.25091519951820374,0.21004587411880493,-0.16516315937042236,-0.20071738958358765,0.120278000831604,-0.09736169874668121,-0.017266234382987022,0.053302276879549026,-0.1712867170572281,-0.18256527185440063,-0.3487108051776886,0.08144685626029968,0.4315735995769501,0.052239980548620224,-0.20500890910625458,-0.03318633884191513,-0.23117315769195557,0.02496335655450821,0.08445239067077637,0.1616835594177246,-0.059740688651800156,0.05100628361105919,-0.1351793259382248,0.04001711308956146,0.14014771580696106,-0.05652813985943794,-0.13236820697784424,0.2054576873779297,-0.06364564597606659,0.053138021379709244,-0.04295843839645386,0.06344523280858994,-0.03818052262067795,-0.004805989563465118,-0.06366901099681854,-0.017763985320925713,0.030634354799985886,-0.04465252906084061,-0.03169960901141167,0.09464313089847565,-0.17444947361946106,0.0816543698310852,0.044250234961509705,-0.008194394409656525,0.03283240646123886,0.018455656245350838,-0.0887739360332489,-0.12978684902191162,0.10222012549638748,-0.27871569991111755,0.21792711317539215,0.21349230408668518,0.08898445218801498,0.2004098743200302,0.050585128366947174,0.11044669896364212,-0.004191878717392683,-0.04139786958694458,-0.08669308573007584,0.02962379716336727,0.0003002710291184485,0.04121767729520798,0.06184491142630577,0.033132217824459076]'),
-(2, 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9l9e5r2zG7sJd2zj6hW8y6', 'admin', 'verifikator', NULL),
-(123456789, 'admin123', '$2y$10$SdrI3VJVNBorELUHficMoesvWM.7epjol77VKnJHpRwFGDIMC0Qqe', 'admin123', 'verifikator', NULL);
+(123456790, 'admin', '$2y$10$b0VdGPJg6rm6BBQ0Q4UF4e/09oWark5AX.vHiUGWTW5Rf6k4y8H0q', 'Administrator', 'superadmin', '[-0.10077156871557236,0.11896884441375732,0.0734204649925232,-0.07579706609249115,-0.0821855366230011,-0.002682885155081749,-0.11290211975574493,-0.16098490357398987,0.16076910495758057,-0.11798454076051712,0.2722827196121216,-0.06119304895401001,-0.21378108859062195,-0.08195126801729202,-0.08167677372694016,0.22746814787387848,-0.20137837529182434,-0.183224156498909,0.0047530364245176315,0.0006242246017791331,0.008926712907850742,-0.037069518119096756,-0.01787400059401989,0.04998540133237839,-0.06185988709330559,-0.3925303816795349,-0.12615498900413513,-0.1237226352095604,-0.07179304212331772,-0.007294915616512299,-0.04487333819270134,0.043983250856399536,-0.21780885756015778,-0.03392887860536575,-0.013954860158264637,0.06057422608137131,-0.003588418010622263,-0.09391216933727264,0.14069616794586182,-0.009215198457241058,-0.1996871829032898,-0.014999184757471085,0.10673161596059799,0.22795486450195312,0.2019415646791458,0.012328713200986385,-0.0016045799711719155,-0.07739198952913284,0.08208980411291122,-0.17531020939350128,0.006101103033870459,0.1213301569223404,0.07350681722164154,0.06998839229345322,0.038030363619327545,-0.17206896841526031,0.012436478398740292,0.05470147728919983,-0.17410694062709808,-0.023522334173321724,0.005984656047075987,-0.0540759414434433,-0.04677637293934822,-0.13401059806346893,0.294779509305954,0.15986664593219757,-0.11124367266893387,-0.13475514948368073,0.22012615203857422,-0.08789637684822083,-0.01707920990884304,0.03819644823670387,-0.17899315059185028,-0.20163162052631378,-0.2632676959037781,0.01933397725224495,0.3943668007850647,0.08770447224378586,-0.20323418080806732,0.03429830074310303,-0.04907098412513733,-0.05368122458457947,0.06307188421487808,0.10600978136062622,0.06414821743965149,0.011991556733846664,-0.0887846127152443,-0.025905607268214226,0.22270824015140533,-0.05838499963283539,-0.002174616325646639,0.20515410602092743,-0.0881628468632698,-0.004885170143097639,0.0435396209359169,0.07209910452365875,-0.06454143673181534,0.038041748106479645,-0.2152477353811264,-0.010416001081466675,-0.05824385955929756,-0.04561967775225639,-0.08166293054819107,0.05215209722518921,-0.12375328689813614,0.03475074842572212,0.06389915198087692,-0.01622917316854,-0.06959376484155655,-0.024871060624718666,-0.09853292256593704,-0.058918435126543045,0.17907483875751495,-0.2190529704093933,0.22159792482852936,0.1120099425315857,0.02616550214588642,0.1815406233072281,0.06161358579993248,0.11124829947948456,-0.059229180216789246,-0.11944767087697983,-0.18110041320323944,-0.06195874139666557,0.06259916722774506,-0.02473417855799198,0.05309169366955757,0.03351978957653046]'),
+(123456791, 'testing', '$2y$10$h2dd4nTifozpwAlWpBzAzOsUSvlz4CAeJnESZzTcjqv0e6h3hs4yy', 'testing', 'verifikator', '[-0.1024954691529274,0.11693089455366135,0.04578942805528641,-0.09646566957235336,-0.10769684612751007,-0.015825828537344933,-0.01711723767220974,-0.09688428044319153,0.2390587329864502,-0.031222665682435036,0.27376314997673035,-0.023320673033595085,-0.20667493343353271,-0.1429251879453659,-0.012583239935338497,0.15019290149211884,-0.21829195320606232,-0.14145000278949738,0.01971057429909706,-0.08773479610681534,0.041656892746686935,-0.0021655894815921783,0.11261266469955444,0.0752379447221756,-0.1424308866262436,-0.4123704135417938,-0.10874901711940765,-0.1256391704082489,0.044057440012693405,-0.048618122935295105,-0.02550164796411991,0.08584930747747421,-0.23143605887889862,-0.02185031771659851,0.0009616169263608754,0.08034008741378784,0.002099468372762203,-0.057135142385959625,0.11611873656511307,0.016208233311772346,-0.14842237532138824,-0.027752825990319252,-0.07671409100294113,0.20965860784053802,0.17244596779346466,0.015029125846922398,0.07282237708568573,-0.09568005800247192,-0.0007384313503280282,-0.08816787600517273,0.0790153369307518,0.18145185708999634,0.047302186489105225,-0.0034474350977689028,-0.04777779430150986,-0.1265280544757843,-0.05505089461803436,0.08538014441728592,-0.15637366473674774,-0.00803448911756277,0.030991330742836,-0.06925011426210403,-0.08162668347358704,-0.08626841753721237,0.23334163427352905,0.16289666295051575,-0.1249009221792221,-0.18860849738121033,0.17450912296772003,-0.11585826426744461,-0.05208319053053856,0.06339479237794876,-0.19123290479183197,-0.1491236835718155,-0.2686944901943207,0.041767168790102005,0.428976446390152,0.03444104641675949,-0.21594668924808502,-0.0368509478867054,-0.15566089749336243,0.041886914521455765,0.016905613243579865,0.10458352416753769,-0.09789247065782547,0.034913189709186554,-0.14054988324642181,0.017953580245375633,0.16582772135734558,-0.04660804942250252,-0.12137539684772491,0.19882214069366455,-0.03909219428896904,0.07382085919380188,0.05265969783067703,0.0473722368478775,-0.018249236047267914,0.029519403353333473,-0.09362372010946274,-0.043013088405132294,0.013379356823861599,-0.10171591490507126,-0.09659535437822342,0.09536062926054001,-0.16228783130645752,0.11683638393878937,0.04879637807607651,-0.02434571273624897,-0.029833825305104256,0.02038668841123581,-0.09651187062263489,-0.10053693503141403,0.1757039576768875,-0.2595565915107727,0.23294597864151,0.20961490273475647,0.08514796942472458,0.2260151207447052,0.03774643689393997,0.12746615707874298,-0.05707357078790665,-0.08344338089227676,-0.08993550390005112,-0.017291517928242683,0.04424118623137474,-0.006834651809185743,0.07326449453830719,0.025327930226922035]'),
+(123456792, 'niadarnia73', '$2y$10$MKUjrp6dKqklk4cvTzBJX.gm3U/WE97Hql6o1EJth7XEZuWpLhddW', 'niadarnia73', 'verifikator', NULL),
+(123456793, 'ahmad safwan', '$2y$10$UgPE5U6WQeSnbvo4HqDxgec0vtzwrTEP3SvXQaGmrmqZK5b8BSt2e', 'ahmad safwan', 'superadmin', NULL);
 
 -- --------------------------------------------------------
 
@@ -172,87 +89,65 @@ INSERT INTO `users_admin` (`id`, `username`, `password`, `nama_lengkap`, `role`,
 
 CREATE TABLE `users_siswa` (
   `id` int NOT NULL,
-  `nama_lengkap` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nisn` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `password` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `role` varchar(10) COLLATE utf8mb4_general_ci DEFAULT 'siswa',
+  `nama_lengkap` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nisn` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `role` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'siswa',
   `tgl_buat` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `foto` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `kk` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `ijazah` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `akte` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `status` enum('pending','diterima','ditolak','revisi') COLLATE utf8mb4_general_ci DEFAULT 'pending',
-  `tahun_ajaran` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `pesan_revisi` text COLLATE utf8mb4_general_ci,
-  `nik` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `jenis_kelamin` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tempat_lahir` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `foto` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `kk` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ijazah` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `akte` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` enum('pending','diterima','ditolak','revisi') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending',
+  `tahun_ajaran` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `pesan_revisi` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `nik` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `jenis_kelamin` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tempat_lahir` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `tanggal_lahir` date DEFAULT NULL,
   `anak_ke` int DEFAULT NULL,
   `jumlah_saudara` int DEFAULT NULL,
-  `status_keluarga` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `desa` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `kecamatan` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `kabupaten` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `provinsi` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `no_hp` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nama_sd` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `alamat_sd` text COLLATE utf8mb4_general_ci,
-  `nama_ayah` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nama_ibu` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `hp_ortu` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `pekerjaan_ayah` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `pekerjaan_ibu` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `nama_wali` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `pekerjaan_wali` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `alamat_wali` text COLLATE utf8mb4_general_ci,
-  `ekstrakurikuler` text COLLATE utf8mb4_general_ci,
-  `prestasi` text COLLATE utf8mb4_general_ci,
-  `kip` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `jalur_masuk` varchar(50) COLLATE utf8mb4_general_ci DEFAULT 'Reguler'
+  `status_keluarga` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `desa` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `kecamatan` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `kabupaten` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `provinsi` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `no_hp` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nama_sd` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `alamat_sd` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `nama_ayah` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nama_ibu` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `hp_ortu` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `pekerjaan_ayah` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `pekerjaan_ibu` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `nama_wali` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `pekerjaan_wali` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `alamat_wali` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `ekstrakurikuler` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `prestasi` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `kip` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `jalur_pendaftaran` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Reguler'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users_siswa`
 --
 
-INSERT INTO `users_siswa` (`id`, `nama_lengkap`, `nisn`, `password`, `role`, `tgl_buat`, `foto`, `kk`, `ijazah`, `akte`, `status`, `tahun_ajaran`, `pesan_revisi`, `nik`, `jenis_kelamin`, `tempat_lahir`, `tanggal_lahir`, `anak_ke`, `jumlah_saudara`, `status_keluarga`, `desa`, `kecamatan`, `kabupaten`, `provinsi`, `no_hp`, `nama_sd`, `alamat_sd`, `nama_ayah`, `nama_ibu`, `hp_ortu`, `pekerjaan_ayah`, `pekerjaan_ibu`, `nama_wali`, `pekerjaan_wali`, `alamat_wali`, `ekstrakurikuler`, `prestasi`, `kip`, `jalur_masuk`) VALUES
-(10, 'Muh.Amar', '123123123123', '$2y$10$Gri7hHuk5mx1aSJpdNxzBemTY4Bmtpzd0YtPgVjnj3JIDkR3T0JtW', 'siswa', '2026-05-02 14:22:37', '1777732657_81e695ec.jpg', '1777732657_f9bed0a1.jpg', '1777732657_3ff79eb5.jpg', NULL, 'revisi', '2026/2027', 'sadasd', '21321312313123123123', 'L', 'Pare pare', '2001-06-12', 0, 0, '', '', '', '', '', '', 'dsfsdf', '', 'saad', 'asd', '0208324324234', 'asd', 'asd', '', '', '', '', '', NULL, 'Reguler'),
-(11, 'Uliana Safitri', '1707200400', '$2y$10$9swbpmvN4joAq.VbnhwqnO6WYJ4yrR.aCdGJU2O0CXTbMYtD1PykK', 'siswa', '2026-05-03 03:52:15', '1778339626_e6eb89ca.jpg', '1778339626_7c2c66b2.jpg', '1778339626_378fa26d.jpg', '1778568648_ca2c6b7b.jpg', 'diterima', '2026/2027', NULL, '83883828388', 'L', 'Pare', '2004-07-17', 2, 2, 'Anak Kandung', 'dsfkjsdjkf', 'sdfsdf', 'sdfnnsf', 'sdfnsfj', '324900230423', 'sdkfjksf', 'sdjfjsdf', 'dsfnjndsjsd', 'sdfnjsdfj', '30940923040', 'sdbfbsfbs', 'sdjfjsdj', '', '', '', 'sdfkjsf', 'sdfknksndf', '1778568648_e4ae78ad.jpg', 'Reguler'),
-(12, 'Test Student', '1234567890', '$2y$10$V1xOZO/1v525askYADgEluX03WxnsR4W5nMkD8cCd7r9AK3AZ1SwS', 'siswa', '2026-05-09 14:12:19', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, '1234567890123456', 'L', 'Jakarta', '2000-01-01', 1, 2, 'Anak Kandung', 'Cilandak', '', '', '', '', 'SDN 01 Jakarta', 'Jl. Kebon Jeruk No. 1', 'Budi Ayah', '', '', '', '', '', '', '', '', '', NULL, 'Reguler'),
-(13, 'Ansar', '8888888888', '$2y$10$UBfdYn6ccFFbDajoWRzoRuybdY3dr/FhQ0TIDawAg4YIW8K9MBoya', 'siswa', '2026-05-09 15:37:39', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, 'dsfsdf', 'P', '', NULL, 0, 0, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', NULL, 'Reguler'),
-(14, 'tesLagi', '9999999999', '$2y$10$QKPsWYHbqVv51aPrJ3KuaeQXzvCwUUp5hHbVPuX7BF9nuxtfOwpLW', 'siswa', '2026-05-12 06:51:57', '1778568917_55df989c.jpg', '1778568917_de20af9f.jpg', '1778568917_dc7db341.jpg', '1778568917_bce024cd.jpg', 'pending', '2026/2027', NULL, 'sadasdasd', '', 'sdad', '2000-05-02', 2, 3, 'Anak Kandung', 'dsfsdf', 'sdfsdfsdf', 'dsfdsf', 'sdfsdf', '432984892894892', 'sfsafaf', 'saasfasf', 'sdfjjsdf', 'sdf', '3248932879784', 'sdf', 'sdfsfdr', '', '', '', 'safasfasf', 'asfasf', '1778568917_6e84f3bb.jpg', 'Reguler'),
-(15, 'TestingArsip', '0102030405', '$2y$10$RpVvAHUdhVIJjUxfPFJk0eypZR.61eeASSpVdPq/IVQqgb8/68FW2', 'siswa', '2026-05-12 13:24:02', NULL, NULL, NULL, NULL, 'diterima', '2027/2028', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Reguler'),
-(16, 'TestingLagiArsip', '0908070600', '$2y$10$WRY8V9OpKRGKpnDCwgrRSOUkReWulLs8PkEQwSRu7wHrk5BF0HGFC', 'siswa', '2026-05-12 13:25:24', NULL, NULL, NULL, NULL, 'diterima', '2027/2028', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Reguler');
+INSERT INTO `users_siswa` (`id`, `nama_lengkap`, `nisn`, `password`, `role`, `tgl_buat`, `foto`, `kk`, `ijazah`, `akte`, `status`, `tahun_ajaran`, `pesan_revisi`, `nik`, `jenis_kelamin`, `tempat_lahir`, `tanggal_lahir`, `anak_ke`, `jumlah_saudara`, `status_keluarga`, `desa`, `kecamatan`, `kabupaten`, `provinsi`, `no_hp`, `nama_sd`, `alamat_sd`, `nama_ayah`, `nama_ibu`, `hp_ortu`, `pekerjaan_ayah`, `pekerjaan_ibu`, `nama_wali`, `pekerjaan_wali`, `alamat_wali`, `ekstrakurikuler`, `prestasi`, `kip`, `jalur_pendaftaran`) VALUES
+(17, 'meni', '1111111111', '$2y$10$Irs8CJHuLkGDgQpKY82HGu/95vh4Xvrr5uIMd2innSHKx.Buo4X5O', 'siswa', '2026-05-16 11:10:26', '1779270074_9e0c8587.jpg', '1778930417_40244710.png', '1778930418_3e5ce994.png', '1778930418_140829ec.png', 'diterima', '2026/2027', NULL, '7242797834', '', 'dongi', '2004-04-15', 1, 1, '', 'dongi', 'pitu riawa', 'sidrap', 'sulawesi selatan', '0863478932', 'SDN 1 OTTING', 'dongi', 'sfsds', 'fsdfs', '03924738', 'petani', 'URT', '', '', '', 'pramuka', 'shhdshs', '1778930418_7de6f4b5.png', 'Reguler'),
+(18, 'fira', '2222222222', '$2y$10$HbIEMR6EvVRLCrPWgkQFteMQe3/Lss7520Td6.fxq3AjHZJMF41ne', 'siswa', '2026-05-16 11:26:49', '1778934136_3a812d91.jpg', '1778934136_57bd658d.png', '1778934136_15596e90.png', '1778934136_ee40d989.png', 'diterima', '2026/2027', NULL, '01932937284', 'P', '433892', NULL, 2, 2, 'Anak Kandung', 'empagae', 'cimahi', 'sidrap', 'sulsel', 'mjdsskfbsmcj', 'SDN 1 OTTING', 'dongi', 'dbkjbjl', 'jsdknh', '0293829', 'fkjsgkjfs', 'msbdm', '', '', '', 'pramuka', 'fsjfbdkfj', '1778934136_4a84a0a6.png', 'Reguler'),
+(19, 'isna', '3333333333', '$2y$10$FAXKw8bKtZ6JaNNXssJBa.eZl9.aAp99mfVuHtK8T5m5XtrHSEX1i', 'siswa', '2026-05-17 09:10:10', '1779009278_d1204985.png', '1779009278_a7cf1fd4.png', '1779009278_93365e0c.png', '1779009278_36c2c2fb.png', 'diterima', '2026/2027', NULL, '2749439027', 'P', 'makassar', '2004-08-17', 2, 3, 'Anak Kandung', 'teteaji', 'hasdjbjsm', 'sidrap', 'sulsel', '0839276294', 'SDN 3 OTTING', 'DONGI', 'gsdhbjmdge', 'gsvdhnsv', '2871974223754', 'sgdhjsda', 'snvdh', '', '', '', 'PRAMUKA', 'JUARA SATU LOMBA PUISI SEASIA', '1779009278_95881335.png', 'Reguler'),
+(20, 'wasiatul immil', '8888888888', '$2y$10$3JMwNs30DIwZcNX6dgyBcuT37BY7m.wtC6hXSpv/VaZ/UwhmKrcYG', 'siswa', '2026-05-21 23:30:29', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, '2578889576', 'P', 'polewali', '2012-10-13', 1, 0, 'Anak Kandung', 'polewali', 'tellu limpoe', 'sidrap', 'sulawesi selatan', '0876546476787', 'SDN 3 TETEAJI', 'TETEAJI', 'amiruddin', 'yatri lebe', '089789679', 'travel', 'IRT', '', '', '', 'PRAMUKA', '', NULL, 'Reguler'),
+(21, 'SYAHRATUL AINI', '0106598834', '$2y$10$rh4VAgvvXhqhwMn0Ln9oNua8yJZWFRRvqtRosWUs2EerZ7rl7wb52', 'siswa', '2026-05-22 21:29:25', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, '\'7314014111100001', 'P', 'ALESALEWO', '2010-11-01', 0, 0, 'Anak Kandung', 'Dusun Aleselewo', 'Dusun Aleselewo', 'Sidenreng Rappang', 'sulawesi selatan', '0827638492', '', '', 'ANWAR', 'RASMAWATI', '0825374282', '', '', '', '', '', '', '', NULL, 'Reguler'),
+(22, 'FADHIL SAHLY', '0104337641', '$2y$10$.HjtQSbi7/ctbFKCbviDiOmd0KLsQ0tR6Y3dcEGtw8buRd4IEOLv6', 'siswa', '2026-05-22 21:33:57', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Reguler'),
+(23, 'ANDI IRWANSYAH FIRLY', '0101994781', '$2y$10$BKeVHXMhDWTOV4n.e.f9OeY/C0oiwmrcBB1eYh.zYvE2LPpNOt6mW', 'siswa', '2026-05-22 22:13:32', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, '\'7314033112100001', 'L', 'PANGKAJENNE', '2010-12-31', 0, 0, '', 'JL.TEMINAL II TETEAJI', 'tellu limpoe', 'Sidenreng Rappang', 'sulawesi selatan', '', 'SDN 3 TETEAJI', '', 'ANDI ROBBY FIRLY', 'ASRIYANI ILYAS', '', '', '', '', '', '', '', '', NULL, 'Reguler'),
+(24, 'SYAHRIL', '0118980358', '$2y$10$PKxuVlkq9w5qA96uk9Kw/uWorRMmoAaXe2TH6ejSdGChew9pwLRfu', 'siswa', '2026-05-22 22:20:32', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, '\'7314021006110001', 'L', 'TETEAJI', '2011-06-10', 0, 0, '', 'JL.M.SUYUTI DJUNAID TETEAJI', 'tellu limpoe', 'Sidenreng Rappang', 'sulawesi selatan', '', 'SDN 3 TETEAJI', '', 'SOFYANG', 'HAWA', '', '', '', '', '', '', '', '', NULL, 'Reguler'),
+(25, 'RESKI SRIWIJAYA', '0115336064', '$2y$10$0Xs3Digdr6N0bDz/CXds/..Xy.gyAT.AUuWYNJun0GOU2iQORMTqO', 'siswa', '2026-05-22 22:23:49', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Reguler'),
+(26, 'DESY ISNAENI', '0106510881', '$2y$10$qFrXfS2U1dkaH2kKFDgpFOUNhrSmOlJliyZZwSD17WjqUIE7wBPna', 'siswa', '2026-05-22 22:28:11', NULL, NULL, NULL, NULL, 'diterima', '2026/2027', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Reguler');
 
 --
 -- Indexes for dumped tables
 --
-
---
--- Indexes for table `password_resets`
---
-ALTER TABLE `password_resets`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
-
---
--- Indexes for table `pendaftar`
---
-ALTER TABLE `pendaftar`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `pendaftaran`
---
-ALTER TABLE `pendaftaran`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `pengumuman`
---
-ALTER TABLE `pengumuman`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `ppdb_pengumuman`
@@ -285,30 +180,6 @@ ALTER TABLE `users_siswa`
 --
 
 --
--- AUTO_INCREMENT for table `password_resets`
---
-ALTER TABLE `password_resets`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `pendaftar`
---
-ALTER TABLE `pendaftar`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT for table `pendaftaran`
---
-ALTER TABLE `pendaftaran`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `pengumuman`
---
-ALTER TABLE `pengumuman`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `ppdb_pengumuman`
 --
 ALTER TABLE `ppdb_pengumuman`
@@ -318,19 +189,19 @@ ALTER TABLE `ppdb_pengumuman`
 -- AUTO_INCREMENT for table `ppdb_settings`
 --
 ALTER TABLE `ppdb_settings`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=89;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
 
 --
 -- AUTO_INCREMENT for table `users_admin`
 --
 ALTER TABLE `users_admin`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123456790;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123456794;
 
 --
 -- AUTO_INCREMENT for table `users_siswa`
 --
 ALTER TABLE `users_siswa`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
